@@ -11,4 +11,6 @@ indexRouter.get("/", heartbeatCheck)
 
 indexRouter.get("/metrics", metricsCheck)
 
+// indexRouter.use("/media", mediaRouter)
+
 export { indexRouter }

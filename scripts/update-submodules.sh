@@ -8,3 +8,4 @@ git checkout main
 git pull origin main
 cd ../../../
 
+npx prisma generate
