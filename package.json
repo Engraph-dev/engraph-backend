@@ -1,0 +1,64 @@
+{
+	"name": "engraph-backend",
+	"version": "1.0.0",
+	"description": "Engraph Backend",
+	"main": "src/server.ts",
+	"scripts": {
+		"start": "node dist/server.js",
+		"dev": "nodemon",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "npx tsc && npx resolve-tspaths",
+		"postinstall": "npx prisma generate",
+		"prepare": "husky install"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Engraph-dev/engraph-backend.git"
+	},
+	"author": "Engraph.dev",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/Engraph-dev/engraph-backend/issues"
+	},
+	"homepage": "https://github.com/Engraph-dev/engraph-backend#readme",
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.675.0",
+		"@aws-sdk/s3-request-presigner": "^3.675.0",
+		"@paralleldrive/cuid2": "^2.2.2",
+		"@prisma/client": "^5.21.1",
+		"bcryptjs": "^2.4.3",
+		"body-parser": "^1.20.3",
+		"cookie-parser": "^1.4.7",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"express": "^4.21.1",
+		"jsonwebtoken": "^9.0.2",
+		"node-cron": "^3.0.3",
+		"prisma": "^5.21.1",
+		"resend": "^4.0.0",
+		"resolve-tspaths": "^0.8.22",
+		"validator": "^13.12.0"
+	},
+	"devDependencies": {
+		"@trivago/prettier-plugin-sort-imports": "^4.3.0",
+		"@types/bcryptjs": "^2.4.6",
+		"@types/body-parser": "^1.19.5",
+		"@types/cookie-parser": "^1.4.7",
+		"@types/cors": "^2.8.17",
+		"@types/express": "^5.0.0",
+		"@types/jsonwebtoken": "^9.0.7",
+		"@types/node": "^22.7.7",
+		"@types/node-cron": "^3.0.11",
+		"@types/validator": "^13.12.2",
+		"husky": "^9.1.6",
+		"lint-staged": "^15.2.10",
+		"nodemon": "^3.1.7",
+		"prettier": "^3.3.3",
+		"ts-node": "^10.9.2",
+		"tsconfig-paths": "^4.2.0",
+		"typescript": "^5.6.3"
+	},
+	"lint-staged": {
+		"*.{ts,js,css,md}": "prettier --write"
+	}
+}

@@ -1,0 +1,33 @@
+import type { Org, Session, User } from "@prisma/client"
+import type { Request, Response } from "express"
+
+import { ReqMethod, ResJSON, StatusCode } from "@/util/defs/common"
+
+export type SessionCookieContent = Pick<Session, "sessionId">
+
+export type ReqUserSession = Session & {
+	sessionUser: User
+	sessionOrg: Org
+}
+
+export interface IRequest<
+	ParamT extends {} = {},
+	BodyT extends {} = {},
+	QueryT extends {} = {},
+> extends Request<ParamT, {}, BodyT, QueryT, {}> {
+	currentSession?: ReqUserSession
+	method: ReqMethod | string
+}
+
+// @ts-expect-error
+export interface IResponse<
+	ParamT extends {} = {},
+	BodyT extends {} = {},
+	QueryT extends {} = {},
+> extends Response {
+	status(statusCode: StatusCode): IResponse<ParamT, BodyT, QueryT>
+
+	json<DataT extends {}>(
+		data: ResJSON<DataT, ParamT, BodyT, QueryT>,
+	): IResponse<ParamT, BodyT, QueryT>
+}
