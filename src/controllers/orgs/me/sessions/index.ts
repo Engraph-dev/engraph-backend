@@ -9,7 +9,7 @@ import {
 	EndSessionParams,
 	GetActiveSessionsResponse,
 	GetSessionResponse,
-} from "@/util/defs/orgs/[orgId]/sessions"
+} from "@/util/defs/orgs/me/sessions"
 import { requestHandler } from "@/util/http/helpers"
 
 export const getCurrentSession = requestHandler(async (req, res) => {

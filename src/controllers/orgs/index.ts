@@ -37,7 +37,9 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 				},
 			},
 			include: {
-				orgUsers: true,
+				orgUsers: {
+					take: 1,
+				},
 			},
 		})
 
@@ -53,3 +55,4 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 		})
 	},
 )
+

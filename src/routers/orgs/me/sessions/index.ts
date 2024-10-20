@@ -5,11 +5,11 @@ import {
 	endSessionById,
 	getActiveSessions,
 	getCurrentSession,
-} from "@/controllers/orgs/[orgId]/sessions"
+} from "@/controllers/orgs/me/sessions"
 
 import { SessionEntityValidator } from "@/util/app/validators/session"
 import { NoParams } from "@/util/defs/common"
-import { EndSessionParams } from "@/util/defs/orgs/[orgId]/sessions"
+import { EndSessionParams } from "@/util/defs/orgs/me/sessions"
 import { restrictEndpoint, validateParams } from "@/util/http/middleware"
 
 const sessionRouter = Router({ mergeParams: true })
