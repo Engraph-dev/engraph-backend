@@ -9,8 +9,30 @@ import {
 import { BCRYPT_SALT_ROUNDS } from "@/util/config/auth"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/common"
-import type { CreateOrgBody } from "@/util/defs/orgs"
+import type { CheckEmailBody, CreateOrgBody } from "@/util/defs/orgs"
 import { requestHandler } from "@/util/http/helpers"
+
+export const checkOrgEmail = requestHandler<NoParams, CheckEmailBody, NoParams>(
+	async (req, res) => {
+		const { userMail } = req.body
+
+		const user = await db.user.findFirst({
+			where: {
+				userMail: userMail,
+			},
+		})
+
+		if (user) {
+			return res.status(StatusCodes.METHOD_NOT_ALLOWED).json({
+				responseStatus: "ERR_METHOD_NOT_ALLOWED",
+			})
+		}
+
+		return res.status(StatusCodes.OK).json({
+			responseStatus: "SUCCESS",
+		})
+	},
+)
 
 export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 	async (req, res) => {
@@ -55,4 +77,3 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 		})
 	},
 )
-

@@ -34,7 +34,7 @@ export async function matchUrlWithContentTypes(
 export enum IdentSuffixType {
 	// 25-character wide CUID
 	Cuid,
-	// 
+	//
 	MiniCuid,
 	None,
 }

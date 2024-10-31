@@ -1,4 +1,12 @@
 import {
+	AWS_CLOUDFRONT_BASE_URL,
+	AWS_S3_BUCKET,
+	AWS_S3_KEY_ID,
+	AWS_S3_KEY_SECRET,
+	AWS_S3_REGION,
+	S3_REQUEST_VALIDITY_SECONDS,
+} from "../config/s3"
+import {
 	DeleteObjectCommand,
 	GetObjectCommand,
 	PutObjectCommand,
@@ -8,14 +16,6 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { S3RequestMethod, S3RequestStatus } from "@prisma/client"
 
 import db from "@/util/db"
-import {
-	AWS_CLOUDFRONT_BASE_URL,
-	AWS_S3_BUCKET,
-	AWS_S3_KEY_ID,
-	AWS_S3_KEY_SECRET,
-	AWS_S3_REGION,
-	S3_REQUEST_VALIDITY_SECONDS
-} from "../config/s3"
 
 export const s3Client = new S3Client({
 	region: AWS_S3_REGION,
