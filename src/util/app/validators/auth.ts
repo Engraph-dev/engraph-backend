@@ -1,5 +1,5 @@
 import db from "@/util/db"
-import { ErrorCodes } from "@/util/defs/errors"
+import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import { EXPECT_TYPE } from "@/util/http/validators"
 
 export const UnusedEmail = EXPECT_TYPE<string>("string", async (userMail) => {

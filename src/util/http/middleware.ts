@@ -3,8 +3,8 @@ import {
 	ParamType,
 	ReqMethod,
 	StatusCodes,
-} from "@/util/defs/common"
-import { ErrorCode } from "@/util/defs/errors"
+} from "@/util/defs/engraph-backend/common"
+import { ErrorCode } from "@/util/defs/engraph-backend/errors"
 import { IRequest, ReqUserSession } from "@/util/http"
 import { middlewareHandler } from "@/util/http/helpers"
 

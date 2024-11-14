@@ -6,12 +6,12 @@ import {
 	S3_OBJECT_UPLOAD_MAX_SIZE_BYTES,
 } from "@/util/config/s3"
 import db from "@/util/db"
-import type { NoParams } from "@/util/defs/common"
-import { ErrorCodes } from "@/util/defs/errors"
+import type { NoParams } from "@/util/defs/engraph-backend/common"
+import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import {
 	MediaEndpointRequestBody,
 	type MediaEndpointRequestQuery,
-} from "@/util/defs/media"
+} from "@/util/defs/engraph-backend/media"
 import { BatchValidatorFunction } from "@/util/http/middleware"
 import { EXPECT_TYPE } from "@/util/http/validators"
 

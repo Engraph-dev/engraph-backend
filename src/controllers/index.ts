@@ -1,5 +1,8 @@
 import db from "@/util/db"
-import { HeartbeatCheckResponse, StatusCodes } from "@/util/defs/common"
+import {
+	HeartbeatCheckResponse,
+	StatusCodes,
+} from "@/util/defs/engraph-backend/common"
 import { requestHandler } from "@/util/http/helpers"
 
 export const heartbeatCheck = requestHandler(async (req, res) => {

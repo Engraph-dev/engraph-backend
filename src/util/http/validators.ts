@@ -1,8 +1,9 @@
 import { AWS_CLOUDFRONT_BASE_URL } from "../config/s3"
+import validator from "validator"
 
 import { ContentType } from "@/util/config/media"
 import db from "@/util/db"
-import { type ErrorCode, ErrorCodes } from "@/util/defs/errors"
+import { type ErrorCode, ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import { ValidatorFunction, ValidatorFunctionRet } from "@/util/http/middleware"
 
 export type VarType = "string" | "number" | "boolean" | "object" | "date"
@@ -411,6 +412,21 @@ export function MATCH_REGEX(regex: RegExp) {
 			errorArgs: {
 				regExp: regex.toString(),
 			},
+		}
+	})
+}
+
+export function IS_EMAIL(): ValidatorFunction<string> {
+	return EXPECT_TYPE<string>("string", (userMail) => {
+		const isEmail = validator.isEmail(userMail)
+		if (isEmail) {
+			return {
+				validationPass: true,
+			}
+		}
+		return {
+			validationPass: false,
+			errorCode: ErrorCodes.InvalidEmail,
 		}
 	})
 }

@@ -5,14 +5,14 @@ import { getEventData, logEvent } from "@/util/app/events"
 import { getObjectUrl, s3Client } from "@/util/app/s3"
 import { AWS_S3_BUCKET, S3_REQUEST_VALIDITY_SECONDS } from "@/util/config/s3"
 import db from "@/util/db"
-import { NoParams, StatusCodes } from "@/util/defs/common"
-import { ErrorCodes } from "@/util/defs/errors"
+import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
+import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import type {
 	MediaCallbackParams,
 	MediaEndpointRequestBody,
 	MediaEndpointRequestQuery,
 	MediaEndpointResponse,
-} from "@/util/defs/media"
+} from "@/util/defs/engraph-backend/media"
 import { requestHandler } from "@/util/http/helpers"
 
 export const mediaHandler = requestHandler<

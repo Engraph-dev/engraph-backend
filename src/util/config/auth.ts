@@ -22,8 +22,7 @@ export const WEB_ENDPOINTS = {
 
 export const BRAND_NAME = "Engraph.dev"
 export const JWT_EXPIRATION_HOURS = 24
-export const CACHE_SECONDS = 600
-export const PASSWORD_LENGTH = 8
+export const PASSWORD_LENGTH = 10
 
 export const DEV_ORIGINS = ["http://localhost:3000", "http://localhost:3001"]
 
@@ -46,6 +45,7 @@ export const DEV_COOKIE_OPTIONS: Record<string, string | undefined> = {
 	HttpOnly: undefined,
 }
 
-export const COOKIE_SILENT_FAIL = true
-export const SESSION_ID_SILENT_FAIL = true
-export const SESSION_EXPIRY_SILENT_FAIL = true
+export const COOKIE_SILENT_FAIL = false
+export const SESSION_ID_SILENT_FAIL = false
+export const SESSION_EXPIRY_SILENT_FAIL = false
+export const VERIFY_EMAIL = true

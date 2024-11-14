@@ -1,4 +1,4 @@
-import { dbLogger, eventHandlers } from "./handlers"
+import { consoleLogger, dbLogger, eventHandlers } from "./handlers"
 import { type EventLog, EventType } from "@prisma/client"
 import { EventEmitter } from "node:events"
 
@@ -33,6 +33,11 @@ export const metadataMapping = {
 	[EventType.S3ObjectCreate]: {},
 	[EventType.S3ObjectDelete]: {},
 	[EventType.S3RequestCallback]: {},
+	[EventType.AuthLogin]: {},
+	[EventType.AuthVerify]: {
+		verificationToken: MetadataTypes.String,
+		tokenId: MetadataTypes.String,
+	},
 } satisfies Record<
 	EventType,
 	Record<string, (typeof MetadataTypes)[keyof typeof MetadataTypes]>
@@ -123,7 +128,7 @@ export function getEventData(
 
 Object.values(EventType).forEach((eventType) => {
 	const assocEvents = eventHandlers[eventType] || []
-	const mergedHandlers = [dbLogger, ...assocEvents]
+	const mergedHandlers = [dbLogger, consoleLogger, ...assocEvents]
 	mergedHandlers.forEach((eventHandler) => {
 		eventListener.on(eventType, (...args) => {
 			const event = args[0] as Event

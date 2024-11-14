@@ -2,7 +2,7 @@ import cuid2 from "@paralleldrive/cuid2"
 
 import { DEV_COOKIE_OPTIONS, PROD_COOKIE_OPTIONS } from "@/util/config/auth"
 import { DEFAULT_PAGINATION_SIZE } from "@/util/config/http"
-import { PagedQuery } from "@/util/defs/common"
+import { PagedQuery } from "@/util/defs/engraph-backend/common"
 import { IRequest } from "@/util/http"
 
 type CookieOpts = {

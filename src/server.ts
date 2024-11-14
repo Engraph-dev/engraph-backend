@@ -10,7 +10,7 @@ import cron from "node-cron"
 
 import { cleanupS3Requests } from "@/util/app/s3"
 import { CORS_CONFIG } from "@/util/config/auth"
-import { StatusCodes } from "@/util/defs/common"
+import { StatusCodes } from "@/util/defs/engraph-backend/common"
 import { requestHandler, requestHelper } from "@/util/http/helpers"
 
 dotenv.config()

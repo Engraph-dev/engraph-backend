@@ -8,12 +8,12 @@ import {
 	S3ObjectContentSizeValidator,
 	S3ObjectKeyMethodValidator,
 } from "@/util/app/validators/media"
-import { NoParams } from "@/util/defs/common"
+import { NoParams } from "@/util/defs/engraph-backend/common"
 import {
 	MediaCallbackParams,
 	MediaEndpointRequestBody,
 	type MediaEndpointRequestQuery,
-} from "@/util/defs/media"
+} from "@/util/defs/engraph-backend/media"
 import { requireMethods, validateParams } from "@/util/http/middleware"
 import { EXPECT_TYPE, IN_ARRAY, NOVALIDATE } from "@/util/http/validators"
 

@@ -1,7 +1,7 @@
 import { NODE_ENV } from "../config/http"
 import { NextFunction } from "express"
 
-import { StatusCodes } from "@/util/defs/common"
+import { StatusCodes } from "@/util/defs/engraph-backend/common"
 import { IRequest, IResponse } from "@/util/http/index"
 
 // This is a helper function that wraps around the core handler function

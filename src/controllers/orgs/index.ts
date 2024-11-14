@@ -1,15 +1,20 @@
-import { UserRole } from "@prisma/client"
+import { EventType, UserRole } from "@prisma/client"
 import { hashSync } from "bcryptjs"
 
+import { createCuid } from "@/util/app"
 import { createAndSendVerificationToken } from "@/util/app/auth"
 import {
 	IdentSuffixType,
 	generateIdentifierFromString,
 } from "@/util/app/data-handlers"
+import { getEventData, logEvent } from "@/util/app/events"
 import { BCRYPT_SALT_ROUNDS } from "@/util/config/auth"
 import db from "@/util/db"
-import { NoParams, StatusCodes } from "@/util/defs/common"
-import type { CreateOrgBody } from "@/util/defs/orgs"
+import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
+import {
+	type CreateOrgBody,
+	OrgResponse,
+} from "@/util/defs/engraph-backend/orgs"
 import { requestHandler } from "@/util/http/helpers"
 
 export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
@@ -19,7 +24,9 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 
 		const hashedPassword = hashSync(userPassword, BCRYPT_SALT_ROUNDS)
 
-		const { orgId, orgUsers } = await db.org.create({
+		const userId = createCuid()
+
+		const orgData = await db.org.create({
 			data: {
 				orgId: generateIdentifierFromString(
 					orgName,
@@ -28,6 +35,7 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 				orgName: orgName,
 				orgUsers: {
 					create: {
+						userId: userId,
 						userFirstName: userFirstName,
 						userLastName: userLastName,
 						userMail: userMail,
@@ -36,23 +44,26 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 					},
 				},
 			},
-			include: {
-				orgUsers: {
-					take: 1,
-				},
-			},
 		})
 
-		const ownerUser = orgUsers[0]
-		createAndSendVerificationToken({
-			mailAddress: ownerUser.userMail,
+		const { orgId } = orgData
+
+		logEvent({
+			...getEventData(req),
+			eventType: EventType.OrgCreate,
 			orgId: orgId,
-			userId: ownerUser.userId,
+			eventMetadata: {},
 		})
 
-		return res.status(StatusCodes.OK).json({
+		createAndSendVerificationToken({
+			mailAddress: userMail,
+			orgId: orgId,
+			userId: userId,
+		})
+
+		return res.status(StatusCodes.OK).json<OrgResponse>({
 			responseStatus: "SUCCESS",
+			orgData: orgData,
 		})
 	},
 )
-

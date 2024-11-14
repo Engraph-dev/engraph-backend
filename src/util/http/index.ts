@@ -1,7 +1,11 @@
 import type { Org, Session, User } from "@prisma/client"
 import type { Request, Response } from "express"
 
-import { ReqMethod, ResJSON, StatusCode } from "@/util/defs/common"
+import {
+	ReqMethod,
+	ResJSON,
+	StatusCode,
+} from "@/util/defs/engraph-backend/common"
 
 export type SessionCookieContent = Pick<Session, "sessionId">
 

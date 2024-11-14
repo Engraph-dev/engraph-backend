@@ -5,25 +5,32 @@ import {
 	endSessionById,
 	getActiveSessions,
 	getCurrentSession,
-} from "@/controllers/orgs/me/sessions"
+} from "@/controllers/orgs/me/sessions/me"
 
 import { SessionEntityValidator } from "@/util/app/validators/session"
-import { NoParams } from "@/util/defs/common"
-import { EndSessionParams } from "@/util/defs/orgs/me/sessions"
+import { NoParams } from "@/util/defs/engraph-backend/common"
+import { EndSessionParams } from "@/util/defs/engraph-backend/orgs/me/sessions/me"
 import { restrictEndpoint, validateParams } from "@/util/http/middleware"
 
-const sessionRouter = Router({ mergeParams: true })
+const myOrgSessionRouter = Router({ mergeParams: true })
 
-sessionRouter.get<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
+myOrgSessionRouter.get<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
 	"/me",
 	restrictEndpoint({
-		allowNonAuthUsers: false,
+		allowNonAuthUsers: true,
 		allowAuthUsers: true,
 	}),
 	getCurrentSession,
 )
 
-sessionRouter.get<"/all", NoParams, NoParams, NoParams, NoParams, NoParams>(
+myOrgSessionRouter.get<
+	"/all",
+	NoParams,
+	NoParams,
+	NoParams,
+	NoParams,
+	NoParams
+>(
 	"/all",
 	restrictEndpoint({
 		allowNonAuthUsers: false,
@@ -32,7 +39,14 @@ sessionRouter.get<"/all", NoParams, NoParams, NoParams, NoParams, NoParams>(
 	getActiveSessions,
 )
 
-sessionRouter.delete<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
+myOrgSessionRouter.delete<
+	"/me",
+	NoParams,
+	NoParams,
+	NoParams,
+	NoParams,
+	NoParams
+>(
 	"/me",
 	restrictEndpoint({
 		allowNonAuthUsers: false,
@@ -41,7 +55,7 @@ sessionRouter.delete<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
 	endCurrentSession,
 )
 
-sessionRouter.delete<"/:sessionId", EndSessionParams>(
+myOrgSessionRouter.delete<"/:sessionId", EndSessionParams>(
 	"/:sessionId",
 	restrictEndpoint({
 		allowNonAuthUsers: false,
@@ -57,4 +71,4 @@ sessionRouter.delete<"/:sessionId", EndSessionParams>(
 	endSessionById,
 )
 
-export { sessionRouter }
+export { myOrgSessionRouter }
