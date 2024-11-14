@@ -37,7 +37,7 @@ function htmlTemplate(args: HTMLTemplateArgs) {
 					border-radius: 5px;
 				}
 				.header {
-					background-color: #6a0dad;
+					background-color: black;
 					padding: 20px;
 					color: #ffffff;
 					text-align: center;
@@ -94,17 +94,17 @@ type SendMailArgs = {
 }
 
 export async function sendMail(args: SendMailArgs) {
-	try {
-		return resendClient.emails.send({
-			to: [args.to],
-			html: htmlTemplate({
-				mailTitle: args.contentTitle,
-				mailBody: args.contentBody,
-			}),
-			from: RESEND_SENDER_ADDRESS,
-			subject: args.subject,
-		})
-	} catch (e) {
-		console.error(e)
+	const mailResp = await resendClient.emails.send({
+		to: [args.to],
+		html: htmlTemplate({
+			mailTitle: args.contentTitle,
+			mailBody: args.contentBody,
+		}),
+		from: RESEND_SENDER_ADDRESS,
+		subject: args.subject,
+	})
+	if (mailResp.error) {
+		throw mailResp.error.message
 	}
+	return mailResp
 }

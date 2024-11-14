@@ -3,19 +3,16 @@ import { compare } from "bcryptjs"
 import { sign } from "jsonwebtoken"
 
 import { cookieOptions, createCuid } from "@/util/app"
-import { createAndSendVerificationToken } from "@/util/app/auth"
 import { getEventData, logEvent } from "@/util/app/events"
 import { AUTH_COOKIE_NAME, JWT_SECRET } from "@/util/config/auth"
 import { SESSION_VALIDITY_SECONDS } from "@/util/config/s3"
 import db from "@/util/db"
-import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
+import { StatusCodes } from "@/util/defs/engraph-backend/common"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import type {
 	CredentialsResponse,
-	DangerZoneBody,
 	LoginCredentialsBody,
 	LoginCredentialsParams,
-	VerifyTokenBody,
 } from "@/util/defs/engraph-backend/orgs/[orgId]/auth"
 import type { SessionCookieContent } from "@/util/http"
 import { requestHandler } from "@/util/http/helpers"
@@ -141,96 +138,3 @@ export const loginCredentials = requestHandler<
 		},
 	})
 })
-
-export const verifyToken = requestHandler<NoParams, VerifyTokenBody>(
-	async (req, res) => {
-		const { tokenId, verificationToken } = req.body
-
-		const authDoc = await db.userVerificationToken.update({
-			where: {
-				tokenId: tokenId,
-				verificationToken: verificationToken,
-			},
-			data: {
-				targetUser: {
-					update: {
-						userVerified: true,
-					},
-				},
-			},
-		})
-
-		await db.userVerificationToken.deleteMany({
-			where: {
-				userId: authDoc.userId,
-			},
-		})
-
-		logEvent({
-			...getEventData(req),
-			eventType: EventType.AuthVerify,
-			eventMetadata: {
-				tokenId: tokenId,
-				verificationToken: verificationToken,
-			},
-		})
-
-		res.status(StatusCodes.OK).json({
-			responseStatus: "SUCCESS",
-		})
-	},
-)
-
-export const resendVerificationToken = requestHandler(async (req, res) => {
-	const { userId } = req.currentSession!
-
-	const userDoc = await db.user.findUniqueOrThrow({
-		where: {
-			userId: userId,
-		},
-	})
-
-	createAndSendVerificationToken({
-		userId: userId,
-		orgId: userDoc.userOrgId,
-		mailAddress: userDoc.userMail,
-	})
-
-	res.status(StatusCodes.OK).json({
-		responseStatus: "SUCCESS",
-	})
-})
-
-export const dangerZone = requestHandler<NoParams, DangerZoneBody, NoParams>(
-	async (req, res) => {
-		const { userId } = req.currentSession!
-		const authDoc = await db.user.findFirstOrThrow({
-			where: {
-				userId: userId,
-			},
-		})
-
-		const { userPassword } = authDoc
-
-		const isPasswordMatch = await compare(
-			req.body.userPassword,
-			userPassword,
-		)
-		if (isPasswordMatch) {
-			return res.status(StatusCodes.OK).json({
-				responseStatus: "SUCCESS",
-			})
-		}
-
-		return res.status(StatusCodes.BAD_REQUEST).json({
-			responseStatus: "ERR_INVALID_PARAMS",
-			invalidParams: [
-				{
-					paramType: "BODY",
-					paramName: "userPassword",
-					errorCode: ErrorCodes.PasswordMismatch,
-				},
-			],
-		})
-	},
-)

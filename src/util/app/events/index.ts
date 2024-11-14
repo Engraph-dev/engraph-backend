@@ -129,20 +129,22 @@ export function getEventData(
 Object.values(EventType).forEach((eventType) => {
 	const assocEvents = eventHandlers[eventType] || []
 	const mergedHandlers = [dbLogger, consoleLogger, ...assocEvents]
-	mergedHandlers.forEach((eventHandler) => {
-		eventListener.on(eventType, (...args) => {
-			const event = args[0] as Event
-			try {
-				validateMetadata(
-					eventType,
-					event.eventMetadata as MetadataObject,
-				)
-				eventHandler(event)
-			} catch (e) {
-				console.error(e)
-			}
-		})
-	})
+	const eventHandler = async (eventData: Event) => {
+		try {
+			validateMetadata(
+				eventType,
+				eventData.eventMetadata as MetadataObject,
+			)
+			return Promise.all(
+				mergedHandlers.map((evHandler) => {
+					return evHandler(eventData)
+				}),
+			)
+		} catch (e) {
+			console.error(e)
+		}
+	}
+	eventListener.on(eventType, eventHandler)
 })
 
 export default eventListener

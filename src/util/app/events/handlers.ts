@@ -7,9 +7,9 @@ import { db } from "@/util/db"
 
 type EventHandler = (eventData: Event) => any | Promise<any>
 
-export const dbLogger: EventHandler = (eventData) => {
+export const dbLogger: EventHandler = async (eventData) => {
 	if (LOG_DB_EVENTS) {
-		db.eventLog.create({
+		return db.eventLog.create({
 			data: {
 				...eventData,
 				eventMetadata: eventData.eventMetadata ?? {},
