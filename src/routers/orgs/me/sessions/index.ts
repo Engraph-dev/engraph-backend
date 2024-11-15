@@ -19,6 +19,7 @@ myOrgSessionRouter.get<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
 	restrictEndpoint({
 		allowNonAuthUsers: true,
 		allowAuthUsers: true,
+		requireVerified: false,
 	}),
 	getCurrentSession,
 )
@@ -35,6 +36,7 @@ myOrgSessionRouter.get<
 	restrictEndpoint({
 		allowNonAuthUsers: false,
 		allowAuthUsers: true,
+		requireVerified: false,
 	}),
 	getActiveSessions,
 )
@@ -51,6 +53,7 @@ myOrgSessionRouter.delete<
 	restrictEndpoint({
 		allowNonAuthUsers: false,
 		allowAuthUsers: true,
+		requireVerified: false,
 	}),
 	endCurrentSession,
 )
@@ -60,6 +63,7 @@ myOrgSessionRouter.delete<"/:sessionId", EndSessionParams>(
 	restrictEndpoint({
 		allowNonAuthUsers: false,
 		allowAuthUsers: true,
+		requireVerified: false,
 	}),
 	validateParams({
 		urlParams: {

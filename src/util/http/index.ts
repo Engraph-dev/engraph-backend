@@ -21,6 +21,7 @@ export interface IRequest<
 > extends Request<ParamT, {}, BodyT, QueryT, {}> {
 	currentSession?: ReqUserSession
 	method: ReqMethod | string
+	xsrfValid?: boolean
 }
 
 // @ts-expect-error

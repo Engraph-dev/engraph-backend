@@ -25,8 +25,8 @@ const orgRouter = Router({
 orgRouter.post<"/", NoParams, NoParams, CreateOrgBody, NoParams, NoParams>(
 	"/",
 	restrictEndpoint({
-		allowAuthUsers: false,
 		allowNonAuthUsers: true,
+		allowAuthUsers: false,
 	}),
 	validateParams({
 		bodyParams: {
@@ -45,6 +45,7 @@ orgRouter.use(
 	restrictEndpoint({
 		allowAuthUsers: true,
 		allowNonAuthUsers: false,
+		requireVerified: false,
 	}),
 	myOrgRouter,
 )

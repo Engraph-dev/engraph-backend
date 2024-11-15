@@ -27,7 +27,7 @@ export const OrgIdValidator = EXPECT_TYPE<string>("string", async (orgId) => {
 	}
 })
 
-export function OrgAccessCheck(args?: OrgCheckArgs) {
+export function OrgIdAccessCheck(args?: OrgCheckArgs) {
 	const { userRoles = Object.values(UserRole) } = args || {}
 	return EXPECT_TYPE<string>("string", async (orgId, req) => {
 		const validOrg = await db.org.findFirst({

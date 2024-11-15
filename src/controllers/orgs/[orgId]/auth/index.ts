@@ -2,8 +2,10 @@ import { EventType } from "@prisma/client"
 import { compare } from "bcryptjs"
 import { sign } from "jsonwebtoken"
 
-import { cookieOptions, createCuid } from "@/util/app"
+import { createCuid } from "@/util/app"
+import { createAndSendVerificationToken } from "@/util/app/auth"
 import { getEventData, logEvent } from "@/util/app/events"
+import { cookieOptions } from "@/util/app/http"
 import { AUTH_COOKIE_NAME, JWT_SECRET } from "@/util/config/auth"
 import { SESSION_VALIDITY_SECONDS } from "@/util/config/s3"
 import db from "@/util/db"
@@ -14,6 +16,10 @@ import type {
 	LoginCredentialsBody,
 	LoginCredentialsParams,
 } from "@/util/defs/engraph-backend/orgs/[orgId]/auth"
+import type {
+	VerifyTokenBody,
+	VerifyTokenParams,
+} from "@/util/defs/engraph-backend/orgs/me/auth"
 import type { SessionCookieContent } from "@/util/http"
 import { requestHandler } from "@/util/http/helpers"
 
@@ -136,5 +142,70 @@ export const loginCredentials = requestHandler<
 			sessionId: newSession.sessionId,
 			sessionToken: newSession.sessionToken,
 		},
+	})
+})
+
+export const verifyToken = requestHandler<VerifyTokenParams, VerifyTokenBody>(
+	async (req, res) => {
+		const { orgId } = req.params
+		const { tokenId, verificationToken } = req.body
+		const { userId } = req.currentSession!
+
+		const authDoc = await db.userVerificationToken.update({
+			where: {
+				tokenId: tokenId,
+				verificationToken: verificationToken,
+				userId: userId,
+				targetUser: {
+					userOrgId: orgId,
+				},
+			},
+			data: {
+				targetUser: {
+					update: {
+						userVerified: true,
+					},
+				},
+			},
+		})
+
+		await db.userVerificationToken.deleteMany({
+			where: {
+				userId: authDoc.userId,
+			},
+		})
+
+		logEvent({
+			...getEventData(req),
+			eventType: EventType.AuthVerify,
+			eventMetadata: {
+				tokenId: tokenId,
+				verificationToken: verificationToken,
+			},
+		})
+
+		res.status(StatusCodes.OK).json({
+			responseStatus: "SUCCESS",
+		})
+	},
+)
+
+export const resendVerificationToken = requestHandler(async (req, res) => {
+	const { userId } = req.currentSession!
+
+	const userDoc = await db.user.findUniqueOrThrow({
+		where: {
+			userId: userId,
+		},
+	})
+
+	createAndSendVerificationToken({
+		userId: userId,
+		orgId: userDoc.userOrgId,
+		mailAddress: userDoc.userMail,
+	})
+
+	res.status(StatusCodes.OK).json({
+		responseStatus: "SUCCESS",
 	})
 })

@@ -1,4 +1,5 @@
-import { NODE_ENV } from "../config/http"
+import { NODE_ENV, USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "../config/http"
+import db from "../db"
 import { NextFunction } from "express"
 
 import { StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -91,4 +92,35 @@ export const requestHelper = middlewareHandler((req, res, next) => {
 	}
 
 	next()
+})
+
+export const xsrfParser = middlewareHandler(async (req, res, next) => {
+	req.xsrfValid = false
+	if (!USE_XSRF_PROTECTION) {
+		req.xsrfValid = true
+		return next()
+	}
+
+	const xsrfToken = req.headers[XSRF_HEADER_NAME.toLowerCase()]
+	if (typeof xsrfToken !== "string") {
+		return next()
+	}
+
+	const tokenDoc = await db.crossSiteToken.deleteMany({
+		where: {
+			tokenHash: xsrfToken,
+			tokenExpiryTimestamp: {
+				gt: new Date(),
+			},
+			tokenIp: req.ip || "",
+			tokenUA: req.headers["user-agent"] || "",
+		},
+	})
+
+	if (tokenDoc.count === 0) {
+		return next()
+	}
+
+	req.xsrfValid = true
+	return next()
 })

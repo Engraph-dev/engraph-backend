@@ -86,7 +86,6 @@ export const mediaHandler = requestHandler<
 	logEvent({
 		...getEventData(req),
 		eventMetadata: {
-			requestMethod: requestMethod,
 			requestId: createdRequest.requestId,
 		},
 		eventType: EventType.S3RequestCreate,
@@ -107,7 +106,7 @@ export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 
 		const method = req.method as S3RequestMethod
 
-		if (method !== S3RequestMethod.PUT) {
+		if (method === S3RequestMethod.GET) {
 			return res.status(StatusCodes.OK).json({
 				responseStatus: "SUCCESS",
 			})
@@ -125,6 +124,7 @@ export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 		})
 
 		let fileExists: boolean
+		const fileShouldExist = s3Request.requestMethod === S3RequestMethod.PUT
 		try {
 			await s3Client.send(headRequest)
 			fileExists = true
@@ -132,7 +132,18 @@ export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 			fileExists = false
 		}
 
-		if (!fileExists) {
+		if (!fileExists && fileShouldExist) {
+			return res.status(StatusCodes.BAD_REQUEST).json({
+				responseStatus: "ERR_INVALID_PARAMS",
+				invalidParams: [
+					{
+						paramType: "URL",
+						errorCode: ErrorCodes.RequestIdInvalid,
+						paramName: "requestId",
+					},
+				],
+			})
+		} else if (fileExists && !fileShouldExist) {
 			return res.status(StatusCodes.BAD_REQUEST).json({
 				responseStatus: "ERR_INVALID_PARAMS",
 				invalidParams: [
@@ -182,7 +193,7 @@ export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 				...getEventData(req),
 				eventType: EventType.S3RequestCallback,
 				eventMetadata: {
-					objectKey: s3Request.requestObjectKey,
+					requestId: requestId,
 				},
 			})
 			logEvent({

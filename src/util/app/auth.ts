@@ -13,8 +13,9 @@ import {
 	SESSION_EXPIRY_SILENT_FAIL,
 	SESSION_ID_SILENT_FAIL,
 	VERIFICATION_TOKEN_EXPIRATION_HOURS,
-	WEB_BASE_URL,
 	WEB_ENDPOINTS,
+	WEB_ORIGIN,
+	WEB_PROTO,
 } from "@/util/config/auth"
 import db from "@/util/db"
 import { SessionCookieContent } from "@/util/http"
@@ -131,7 +132,7 @@ export async function createAndSendVerificationToken(
 	tokenParams.set("id", newToken.tokenId)
 	tokenParams.set("token", identHash)
 
-	const resolvedUrl = `${WEB_BASE_URL}${WEB_ENDPOINTS.VERIFY_TOKEN}?${tokenParams.toString()}`
+	const resolvedUrl = `${WEB_PROTO}://${args.orgId}.${WEB_ORIGIN}${WEB_ENDPOINTS.VERIFY_TOKEN}?${tokenParams.toString()}`
 
 	if (args.mailAddress) {
 		const mailResponse = await sendMail({

@@ -1,3 +1,6 @@
+import { USE_XSRF_PROTECTION } from "../config/http"
+import { UserRole } from "@prisma/client"
+
 import {
 	InvalidParam,
 	ParamType,
@@ -97,18 +100,46 @@ export function requireMethods(methods: ReqMethod[]) {
 
 type ValidateAuthArgs = {
 	allowNonAuthUsers: boolean
-	allowAuthUsers: boolean
-}
+} & (
+	| {
+			allowAuthUsers: false
+	  }
+	| {
+			allowAuthUsers: true
+			requireVerified: boolean
+			requireRoles?: UserRole[]
+	  }
+)
 
 export function restrictEndpoint(args: ValidateAuthArgs) {
 	return middlewareHandler(async (req, res, next) => {
-		if (args.allowNonAuthUsers && !req.currentSession) {
+		const { allowAuthUsers, allowNonAuthUsers } = args
+
+		if (allowNonAuthUsers && !req.currentSession) {
 			return next()
 		}
-		if (args.allowAuthUsers) {
+		if (allowAuthUsers) {
+			const { requireVerified, requireRoles = Object.values(UserRole) } =
+				args
 			if (!req.currentSession) {
 				return res.status(StatusCodes.UNAUTHENTICATED).json({
 					responseStatus: "ERR_UNAUTHENTICATED",
+				})
+			}
+			if (
+				requireVerified &&
+				!req.currentSession.sessionUser.userVerified
+			) {
+				return res.status(StatusCodes.UNAUTHORIZED).json({
+					responseStatus: "ERR_UNVERIFIED",
+				})
+			}
+
+			if (
+				!requireRoles.includes(req.currentSession!.sessionUser.userRole)
+			) {
+				return res.status(StatusCodes.UNAUTHORIZED).json({
+					responseStatus: "ERR_UNAUTHORIZED",
 				})
 			}
 		} else {
@@ -338,3 +369,17 @@ export function checkAccess<
 		next()
 	})
 }
+
+export const xsrfProtection = middlewareHandler((req, res, next) => {
+	if (!USE_XSRF_PROTECTION) {
+		return next()
+	}
+
+	if (req.xsrfValid) {
+		return next()
+	}
+
+	return res.status(StatusCodes.TEAPOT).json({
+		responseStatus: "ERR_TEAPOT",
+	})
+})

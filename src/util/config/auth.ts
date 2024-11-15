@@ -14,7 +14,8 @@ export const RESEND_SENDER_ADDRESS = envVar("RESEND_SENDER_ADDRESS")
 
 export const VERIFICATION_TOKEN_EXPIRATION_HOURS = 1
 
-export const WEB_BASE_URL = envVar("WEB_BASE_URL")
+export const WEB_ORIGIN = envVar("WEB_ORIGIN")
+export const WEB_PROTO = envVar("WEB_PROTO")
 
 export const WEB_ENDPOINTS = {
 	VERIFY_TOKEN: "/auth/verify-token",
@@ -24,9 +25,9 @@ export const BRAND_NAME = "Engraph.dev"
 export const JWT_EXPIRATION_HOURS = 24
 export const PASSWORD_LENGTH = 10
 
-export const DEV_ORIGINS = ["http://localhost:3000", "http://localhost:3001"]
+export const DEV_ORIGINS = [`${WEB_PROTO}://${WEB_ORIGIN}`]
 
-export const PROD_ORIGINS = ["https://engraph.dev"]
+export const PROD_ORIGINS = [`${WEB_PROTO}://${WEB_ORIGIN}`]
 
 export const CORS_CONFIG: CorsOptions = {
 	credentials: true,
