@@ -1,7 +1,16 @@
-import { NODE_ENV, USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "../config/http"
-import db from "../db"
+import { CORS_CONFIG } from "../config/auth"
+import cors from "cors"
 import { NextFunction } from "express"
+import rateLimit from "express-rate-limit"
 
+import {
+	ACTION_RATE_LIMIT_CONFIG,
+	GET_RATE_LIMIT_CONFIG,
+	NODE_ENV,
+	USE_XSRF_PROTECTION,
+	XSRF_HEADER_NAME,
+} from "@/util/config/http"
+import db from "@/util/db"
 import { StatusCodes } from "@/util/defs/engraph-backend/common"
 import { IRequest, IResponse } from "@/util/http/index"
 
@@ -81,6 +90,7 @@ export const requestHelper = middlewareHandler((req, res, next) => {
 		const oldJson = res.json
 
 		const newJson: typeof res.json = (data) => {
+			console.log(JSON.stringify(res.getHeaders(), null, 4))
 			console.log(JSON.stringify(data, null, 4))
 			oldJson.call(res, data)
 			const endTimestamp = Date.now()
@@ -124,3 +134,22 @@ export const xsrfParser = middlewareHandler(async (req, res, next) => {
 	req.xsrfValid = true
 	return next()
 })
+
+const baseCorsHandler = cors(CORS_CONFIG)
+
+export const corsHelper = middlewareHandler((req, res, next) => {
+	const isDevelopment = NODE_ENV === "development"
+	const originHeader = req.headers["origin"]
+	if (!isDevelopment && !originHeader) {
+		return res.status(StatusCodes.TEAPOT).json({
+			responseStatus: "ERR_TEAPOT",
+		})
+	}
+	return baseCorsHandler(req, res, next)
+})
+
+const _getRateLimiter = rateLimit(GET_RATE_LIMIT_CONFIG)
+const _actionRateLimiter = rateLimit(ACTION_RATE_LIMIT_CONFIG)
+
+export const getRateLimiter = middlewareHandler(_getRateLimiter)
+export const actionRateLimiter = middlewareHandler(_actionRateLimiter)

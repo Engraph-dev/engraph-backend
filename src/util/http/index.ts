@@ -7,7 +7,7 @@ import {
 	StatusCode,
 } from "@/util/defs/engraph-backend/common"
 
-export type SessionCookieContent = Pick<Session, "sessionId">
+export type SessionJwtContent = Pick<Session, "sessionId">
 
 export type ReqUserSession = Session & {
 	sessionUser: User

@@ -8,7 +8,7 @@ import {
 	generateIdentifierFromString,
 } from "@/util/app/data-handlers"
 import { getEventData, logEvent } from "@/util/app/events"
-import { BCRYPT_SALT_ROUNDS } from "@/util/config/auth"
+import { BCRYPT_SALT_ROUNDS, VERIFY_EMAIL } from "@/util/config/auth"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import {
@@ -41,6 +41,7 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 						userMail: userMail,
 						userRole: UserRole.Owner,
 						userPassword: hashedPassword,
+						userVerified: !VERIFY_EMAIL,
 					},
 				},
 			},

@@ -1,14 +1,13 @@
 import { indexRouter } from "@/routers"
 import bodyParser from "body-parser"
 import cookieParser from "cookie-parser"
-import cors from "cors"
 import dotenv from "dotenv"
 import express from "express"
 import cron from "node-cron"
 
+import { authParser } from "@/util/app/auth"
 import { cleanupXSRFTokens } from "@/util/app/http"
 import { cleanupS3Requests } from "@/util/app/s3"
-import { CORS_CONFIG } from "@/util/config/auth"
 import {
 	API_VERSION,
 	NODE_ENV,
@@ -17,7 +16,14 @@ import {
 } from "@/util/config/http"
 import { S3_REQUEST_VALIDITY_SECONDS } from "@/util/config/s3"
 import { StatusCodes } from "@/util/defs/engraph-backend/common"
-import { requestHandler, requestHelper, xsrfParser } from "@/util/http/helpers"
+import {
+	actionRateLimiter,
+	corsHelper,
+	getRateLimiter,
+	requestHandler,
+	requestHelper,
+	xsrfParser,
+} from "@/util/http/helpers"
 
 dotenv.config()
 
@@ -41,14 +47,17 @@ cron.schedule(`*/${XSRF_TIMEOUT_SECONDS / 60} * * * *`, async () => {
 
 app.set("etag", false)
 app.set("trust proxy", true)
+app.disable("x-powered-by")
 
-app.use(cors(CORS_CONFIG))
-
-dotenv.config()
 app.use(bodyParser.json())
 app.use(cookieParser())
 
+app.use(authParser)
+
 app.use(requestHelper)
+app.use(getRateLimiter)
+app.use(actionRateLimiter)
+app.use(corsHelper)
 app.use(xsrfParser)
 
 app.use(`/api/${API_VERSION}`, indexRouter)

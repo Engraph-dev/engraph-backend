@@ -5,7 +5,7 @@ import { getQueryOffset } from "@/util/app"
 import { createAndSendVerificationToken } from "@/util/app/auth"
 import { getEventData, logEvent } from "@/util/app/events"
 import { getMiniUser } from "@/util/app/users"
-import { BCRYPT_SALT_ROUNDS } from "@/util/config/auth"
+import { BCRYPT_SALT_ROUNDS, VERIFY_EMAIL } from "@/util/config/auth"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import {
@@ -34,7 +34,7 @@ export const createUser = requestHandler<NoParams, CreateUserBody, NoParams>(
 				userPassword: hashSync(userPassword, BCRYPT_SALT_ROUNDS),
 				userRole: userRole,
 				userOrgId: req.currentSession!.orgId,
-				userVerified: false,
+				userVerified: !VERIFY_EMAIL,
 			},
 		})
 

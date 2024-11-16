@@ -35,18 +35,24 @@ export const CORS_CONFIG: CorsOptions = {
 	allowedHeaders: ["Content-Type", AUTH_HEADER_NAME, "Cache-Control"],
 }
 
-export const PROD_COOKIE_OPTIONS: Record<string, string | undefined> = {
+type CookieOptions = Record<string, string | undefined>
+
+export const PROD_COOKIE_OPTIONS: CookieOptions = {
 	Path: "/",
 	HttpOnly: undefined,
 	Secure: undefined,
 	SameSite: "None",
 }
-export const DEV_COOKIE_OPTIONS: Record<string, string | undefined> = {
+export const DEV_COOKIE_OPTIONS: CookieOptions = {
 	Path: "/",
 	HttpOnly: undefined,
 }
 
-export const COOKIE_SILENT_FAIL = false
+export const SESSION_VALIDITY_SECONDS = 7 /*d*/ * 24 /*h*/ * 60 /*m*/ * 60 /*s*/
+
+export const JWT_SECRET_EXPOSED_SILENT_FAIL = false
 export const SESSION_ID_SILENT_FAIL = false
 export const SESSION_EXPIRY_SILENT_FAIL = false
+export const STRICT_SESSION_IP_UA_CHECK = false
+
 export const VERIFY_EMAIL = true

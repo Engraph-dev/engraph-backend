@@ -8,8 +8,6 @@ import { authParser } from "@/util/app/auth"
 
 const indexRouter = Router({ mergeParams: true })
 
-indexRouter.use(authParser)
-
 indexRouter.use("/orgs", orgRouter)
 
 indexRouter.use("/media", mediaRouter)

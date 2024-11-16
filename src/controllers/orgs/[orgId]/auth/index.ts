@@ -6,8 +6,11 @@ import { createCuid } from "@/util/app"
 import { createAndSendVerificationToken } from "@/util/app/auth"
 import { getEventData, logEvent } from "@/util/app/events"
 import { cookieOptions } from "@/util/app/http"
-import { AUTH_COOKIE_NAME, JWT_SECRET } from "@/util/config/auth"
-import { SESSION_VALIDITY_SECONDS } from "@/util/config/s3"
+import {
+	AUTH_COOKIE_NAME,
+	JWT_SECRET,
+	SESSION_VALIDITY_SECONDS,
+} from "@/util/config/auth"
 import db from "@/util/db"
 import { StatusCodes } from "@/util/defs/engraph-backend/common"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
@@ -20,7 +23,7 @@ import type {
 	VerifyTokenBody,
 	VerifyTokenParams,
 } from "@/util/defs/engraph-backend/orgs/me/auth"
-import type { SessionCookieContent } from "@/util/http"
+import type { SessionJwtContent } from "@/util/http"
 import { requestHandler } from "@/util/http/helpers"
 
 export const loginCredentials = requestHandler<
@@ -88,7 +91,7 @@ export const loginCredentials = requestHandler<
 	const sessionToken = sign(
 		{
 			sessionId: sessionId,
-		} satisfies SessionCookieContent,
+		} satisfies SessionJwtContent,
 		JWT_SECRET,
 	)
 
