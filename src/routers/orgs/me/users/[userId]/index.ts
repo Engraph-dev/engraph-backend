@@ -1,8 +1,9 @@
-import { userIdSessionsRouter } from "./sessions"
 import { UserRole } from "@prisma/client"
 import { Router } from "express"
 
 import { deleteUser, updateUser } from "@/controllers/orgs/me/users/[userId]"
+
+import { userIdSessionsRouter } from "@/routers/orgs/me/users/[userId]/sessions"
 
 import { UserEntityValidator } from "@/util/app/validators/users"
 import { PASSWORD_LENGTH } from "@/util/config/auth"

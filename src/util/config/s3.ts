@@ -1,4 +1,4 @@
-import { envVar } from "../env"
+import { envVar } from "@/util/env"
 
 export const AWS_S3_BUCKET = envVar("AWS_S3_BUCKET")
 export const AWS_S3_KEY_SECRET = "" // envVar("AWS_S3_KEY_SECRET")

@@ -1,4 +1,4 @@
-import { NODE_ENV } from "./config"
+import { NODE_ENV } from "@/util/config"
 
 export enum LogLevel {
 	Debug = "debug",

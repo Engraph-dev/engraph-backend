@@ -1,7 +1,11 @@
-import { consoleLogger, dbLogger, eventHandlers } from "./handlers"
 import { type EventLog, EventType } from "@prisma/client"
 import { EventEmitter } from "node:events"
 
+import {
+	consoleLogger,
+	dbLogger,
+	eventHandlers,
+} from "@/util/app/events/handlers"
 import type { IRequest } from "@/util/http"
 import { LogLevel, log } from "@/util/log"
 

@@ -1,6 +1,6 @@
-import { DEV_COOKIE_OPTIONS, PROD_COOKIE_OPTIONS } from "../config/auth"
-import db from "../db"
-import type { IRequest } from "../http"
+import { DEV_COOKIE_OPTIONS, PROD_COOKIE_OPTIONS } from "@/util/config/auth"
+import db from "@/util/db"
+import type { IRequest } from "@/util/http"
 
 export type CookieOpts = {
 	expires?: Date

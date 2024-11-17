@@ -1,6 +1,6 @@
-import type { Event } from "./index"
 import type { EventType } from "@prisma/client"
 
+import type { Event } from "@/util/app/events"
 import { LOG_DB_EVENTS } from "@/util/config/events"
 import { db } from "@/util/db"
 import { LogLevel, log } from "@/util/log"

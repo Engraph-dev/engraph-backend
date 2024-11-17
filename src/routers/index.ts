@@ -1,6 +1,6 @@
-import { mediaRouter } from "./media"
-import { orgRouter } from "./orgs"
-import { xsrfRouter } from "./xsrf"
+import { mediaRouter } from "@/routers/media"
+import { orgRouter } from "@/routers/orgs"
+import { xsrfRouter } from "@/routers/xsrf"
 import { heartbeatCheck, metricsCheck } from "@/controllers"
 import { Router } from "express"
 

@@ -1,6 +1,10 @@
-import { envVar } from "../env"
-import { NODE_ENV, USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "./http"
 import type { CorsOptions } from "cors"
+
+
+
+import { NODE_ENV, USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "@/util/config/http";
+import { envVar } from "@/util/env";
+
 
 export const AUTH_COOKIE_NAME = envVar("AUTH_COOKIE_NAME")
 export const AUTH_HEADER_NAME = envVar("AUTH_HEADER_NAME")

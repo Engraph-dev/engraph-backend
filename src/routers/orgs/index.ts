@@ -1,5 +1,5 @@
-import { orgIdRouter } from "./[orgId]"
-import { myOrgRouter } from "./me"
+import { orgIdRouter } from "@/routers/orgs/[orgId]"
+import { myOrgRouter } from "@/routers/orgs/me"
 import { Router } from "express"
 
 import { createOrg } from "@/controllers/orgs"

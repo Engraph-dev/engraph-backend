@@ -1,4 +1,4 @@
-import { requestHandler } from "./util/http/wrappers"
+import { requestHandler } from "@/util/http/wrappers"
 import { indexRouter } from "@/routers"
 import bodyParser from "body-parser"
 import cookieParser from "cookie-parser"

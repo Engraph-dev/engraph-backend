@@ -1,8 +1,9 @@
-import { userIdRouter } from "./[userId]"
 import { UserRole } from "@prisma/client"
 import { Router } from "express"
 
 import { createUser, getUsers } from "@/controllers/orgs/me/users"
+
+import { userIdRouter } from "@/routers/orgs/me/users/[userId]"
 
 import { UnusedEmail } from "@/util/app/validators/auth"
 import { PagedQueryValidator } from "@/util/app/validators/common"
