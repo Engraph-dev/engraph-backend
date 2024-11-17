@@ -15,8 +15,15 @@ import {
 	type CreateOrgBody,
 	OrgResponse,
 } from "@/util/defs/engraph-backend/orgs"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * This is the handler for the orgs endpoint.
+ * It handles requests to create a new organization.
+ * On request, it creates a new organization and a user with the role of owner.
+ * It sends a verification token to the user's email address.
+ * It also logs an event for the creation of the organization.
+ */
 export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 	async (req, res) => {
 		const { orgName, userFirstName, userLastName, userMail, userPassword } =

@@ -24,8 +24,14 @@ import type {
 	VerifyTokenParams,
 } from "@/util/defs/engraph-backend/orgs/me/auth"
 import type { SessionJwtContent } from "@/util/http"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * This is the handler for the login endpoint.
+ * It handles requests to authenticate a user and create a new session.
+ * On request, it creates a new session in the database and returns a session token.
+ * If a session already exists, it closes the existing session before creating a new one.
+ */
 export const loginCredentials = requestHandler<
 	LoginCredentialsParams,
 	LoginCredentialsBody
@@ -148,6 +154,12 @@ export const loginCredentials = requestHandler<
 	})
 })
 
+/**
+ * This is the handler for the verify-token endpoint.
+ * It handles requests to verify a user's email address.
+ * On request, it verifies the token and updates the user's verification status.
+ * Token matching is done using both tokenId and tokenHash
+ */
 export const verifyToken = requestHandler<VerifyTokenParams, VerifyTokenBody>(
 	async (req, res) => {
 		const { orgId } = req.params
@@ -193,6 +205,11 @@ export const verifyToken = requestHandler<VerifyTokenParams, VerifyTokenBody>(
 	},
 )
 
+/**
+ * This is the handler for the resend-verification-token endpoint.
+ * It handles requests to resend a verification token to a user.
+ * On request, it creates a new verification token and sends it to the user's email address.
+ */
 export const resendVerificationToken = requestHandler(async (req, res) => {
 	const { userId } = req.currentSession!
 

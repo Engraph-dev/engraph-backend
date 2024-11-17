@@ -14,7 +14,7 @@ import {
 	type GetUsersQuery,
 	type GetUsersResponse,
 } from "@/util/defs/engraph-backend/orgs/me/users"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
 export const createUser = requestHandler<NoParams, CreateUserBody, NoParams>(
 	async (req, res) => {

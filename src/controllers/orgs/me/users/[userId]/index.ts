@@ -10,7 +10,7 @@ import {
 	UpdateUserParams,
 	type UpdateUserResponse,
 } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
 export const updateUser = requestHandler<
 	UpdateUserParams,

@@ -4,8 +4,12 @@ import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import type { DangerZoneBody } from "@/util/defs/engraph-backend/orgs/me/auth"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * Danger Zone: Verify user password
+ * Use this endpoint to verify the user's password before performing any dangerous operations.
+ */
 export const dangerZone = requestHandler<NoParams, DangerZoneBody, NoParams>(
 	async (req, res) => {
 		const { userId } = req.currentSession!

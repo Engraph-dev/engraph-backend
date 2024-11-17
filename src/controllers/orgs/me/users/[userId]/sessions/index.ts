@@ -5,8 +5,13 @@ import {
 	type GetUserSessionsParams,
 	GetUserSessionsResponse,
 } from "@/util/defs/engraph-backend/orgs/me/users/[userId]/sessions"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * Get all active sessions for a user
+ * Requires the user to be in the same org as the current session
+ * Only returns sessions that have not ended yet
+ */
 export const getUserSessions = requestHandler<
 	GetUserSessionsParams,
 	NoParams,
@@ -37,6 +42,11 @@ export const getUserSessions = requestHandler<
 	})
 })
 
+/**
+ * Close a user session
+ * Requires the user to be in the same org as the current session
+ * Only closes the session if it has not ended yet
+ */
 export const closeUserSession = requestHandler<
 	CloseUserSessionParams,
 	NoParams,
@@ -49,6 +59,9 @@ export const closeUserSession = requestHandler<
 			sessionId: sessionId,
 			userId: userId,
 			orgId: req.currentSession!.orgId,
+			sessionEndTimestamp: {
+				gt: new Date(),
+			},
 		},
 		data: {
 			sessionEndTimestamp: new Date(),

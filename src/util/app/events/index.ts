@@ -3,6 +3,7 @@ import { type EventLog, EventType } from "@prisma/client"
 import { EventEmitter } from "node:events"
 
 import type { IRequest } from "@/util/http"
+import { LogLevel, log } from "@/util/log"
 
 const eventListener = new EventEmitter()
 
@@ -149,7 +150,7 @@ Object.values(EventType).forEach((eventType) => {
 				}),
 			)
 		} catch (e) {
-			console.error(e)
+			log("events", LogLevel.Error, "Event handler error", e)
 		}
 	}
 	eventListener.on(eventType, eventHandler)

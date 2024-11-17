@@ -1,6 +1,22 @@
-import { USE_XSRF_PROTECTION } from "../config/http"
+import { LogLevel, log } from "../log"
 import { UserRole } from "@prisma/client"
+import cors from "cors"
+import rateLimit from "express-rate-limit"
 
+import {
+	CORS_CONFIG,
+	SESSION_EXPIRY_SILENT_FAIL,
+	SESSION_ID_SILENT_FAIL,
+	STRICT_SESSION_IP_UA_CHECK,
+} from "@/util/config/auth"
+import {
+	ACTION_RATE_LIMIT_CONFIG,
+	GET_RATE_LIMIT_CONFIG,
+	NODE_ENV,
+	USE_XSRF_PROTECTION,
+	XSRF_HEADER_NAME,
+} from "@/util/config/http"
+import db from "@/util/db"
 import {
 	InvalidParam,
 	ParamType,
@@ -8,8 +24,9 @@ import {
 	StatusCodes,
 } from "@/util/defs/engraph-backend/common"
 import { ErrorCode } from "@/util/defs/engraph-backend/errors"
-import { IRequest, ReqUserSession } from "@/util/http"
-import { middlewareHandler } from "@/util/http/helpers"
+import type { IRequest, ReqUserSession } from "@/util/http"
+import { parseJwtFromRequest } from "@/util/http/helpers"
+import { middlewareHandler } from "@/util/http/wrappers"
 
 export type ValidatorFunctionRet =
 	| {
@@ -382,4 +399,165 @@ export const xsrfProtection = middlewareHandler((req, res, next) => {
 	return res.status(StatusCodes.TEAPOT).json({
 		responseStatus: "ERR_TEAPOT",
 	})
+})
+
+export const devRequestLogger = middlewareHandler((req, res, next) => {
+	const startTimestamp = Date.now()
+	res.setHeader("Cache-Control", "no-store")
+
+	log(
+		"http",
+		LogLevel.Debug,
+		`${req.protocol.toUpperCase()} ${req.method} ${req.originalUrl}`,
+	)
+	log(
+		"http",
+		LogLevel.Debug,
+		"Request Headers",
+		JSON.stringify(req.headers, null, 4),
+	)
+	log(
+		"http",
+		LogLevel.Debug,
+		"Request Params",
+		JSON.stringify(req.params, null, 4),
+	)
+	log(
+		"http",
+		LogLevel.Debug,
+		"Request Body",
+		JSON.stringify(req.body, null, 4),
+	)
+	log(
+		"http",
+		LogLevel.Debug,
+		"Request Query",
+		JSON.stringify(req.query, null, 4),
+	)
+
+	const oldJson = res.json
+
+	const newJson: typeof res.json = (data) => {
+		log(
+			"http",
+			LogLevel.Debug,
+			"Response Headers",
+			JSON.stringify(res.getHeaders(), null, 4),
+		)
+		log(
+			"http",
+			LogLevel.Debug,
+			"Response Body",
+			JSON.stringify(data, null, 4),
+		)
+		oldJson.call(res, data)
+		const endTimestamp = Date.now()
+		log(
+			"http",
+			LogLevel.Debug,
+			`Request RT: ${endTimestamp - startTimestamp}ms`,
+		)
+		return res
+	}
+
+	res.json = newJson
+
+	next()
+})
+
+const baseCorsHandler = cors(CORS_CONFIG)
+
+export const corsHelper = middlewareHandler((req, res, next) => {
+	const isDevelopment = NODE_ENV === "development"
+	const originHeader = req.headers["origin"]
+	if (!isDevelopment && !originHeader) {
+		return res.status(StatusCodes.TEAPOT).json({
+			responseStatus: "ERR_TEAPOT",
+		})
+	}
+	return baseCorsHandler(req, res, next)
+})
+
+const _getRateLimiter = rateLimit(GET_RATE_LIMIT_CONFIG)
+const _actionRateLimiter = rateLimit(ACTION_RATE_LIMIT_CONFIG)
+
+export const getRateLimiter = middlewareHandler(_getRateLimiter)
+export const actionRateLimiter = middlewareHandler(_actionRateLimiter)
+
+export const authParser = middlewareHandler(async (req, res, next) => {
+	const { headerMode, jwtData, jwtString } = parseJwtFromRequest(req)
+	if (jwtData) {
+		const dbSession = await db.session.findFirst({
+			where: {
+				sessionId: jwtData.sessionId,
+				sessionToken: jwtString,
+			},
+			include: {
+				sessionUser: true,
+				sessionOrg: true,
+			},
+		})
+		if (!dbSession) {
+			if (!SESSION_ID_SILENT_FAIL) {
+				throw new Error(
+					`Session ${jwtData.sessionId} not found in the database!`,
+				)
+			}
+		}
+
+		if (dbSession && dbSession.sessionEndTimestamp <= new Date()) {
+			if (!SESSION_EXPIRY_SILENT_FAIL) {
+				throw new Error(
+					`Expired / Closed session ${dbSession.sessionId} was used`,
+				)
+			}
+			if (STRICT_SESSION_IP_UA_CHECK) {
+				const reqIp = req.ip || ""
+				const reqUa = req.headers["user-agent"] || ""
+				if (
+					dbSession.sessionIp !== reqIp ||
+					dbSession.sessionUA !== reqUa
+				) {
+					throw new Error(
+						`Session ${dbSession.sessionId} IP/UA mismatch!`,
+					)
+				}
+			}
+		}
+		req.currentSession = dbSession ?? undefined
+	}
+
+	next()
+})
+
+export const xsrfParser = middlewareHandler(async (req, res, next) => {
+	req.xsrfValid = false
+	if (!USE_XSRF_PROTECTION) {
+		req.xsrfValid = true
+		return next()
+	}
+
+	const xsrfToken = req.headers[XSRF_HEADER_NAME.toLowerCase()]
+	if (typeof xsrfToken !== "string") {
+		return next()
+	}
+
+	const tokenDoc = await db.crossSiteToken.deleteMany({
+		where: {
+			tokenHash: xsrfToken,
+			tokenExpiryTimestamp: {
+				gt: new Date(),
+			},
+			tokenIp: req.ip || "",
+			tokenUA: req.headers["user-agent"] || "",
+			tokenSessionId: req.currentSession?.sessionId,
+		},
+	})
+
+	if (tokenDoc.count === 0) {
+		return next()
+	}
+
+	req.xsrfValid = true
+	return next()
 })

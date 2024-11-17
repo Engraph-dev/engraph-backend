@@ -4,8 +4,6 @@ import { xsrfRouter } from "./xsrf"
 import { heartbeatCheck, metricsCheck } from "@/controllers"
 import { Router } from "express"
 
-import { authParser } from "@/util/app/auth"
-
 const indexRouter = Router({ mergeParams: true })
 
 indexRouter.use("/orgs", orgRouter)

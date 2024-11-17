@@ -2,7 +2,7 @@ import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { OrgResponse } from "@/util/defs/engraph-backend/orgs"
 import type { UpdateOrgBody } from "@/util/defs/engraph-backend/orgs/me"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
 export const getMyOrg = requestHandler<NoParams, NoParams, NoParams>(
 	async (req, res) => {

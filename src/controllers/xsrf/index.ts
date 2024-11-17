@@ -5,8 +5,13 @@ import { XSRF_TIMEOUT_SECONDS } from "@/util/config/http"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { GetXSRFTokenResponse } from "@/util/defs/engraph-backend/xsrf"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * Get a new XSRF token for the current session (if authenticated)
+ * The token is valid for {XSRF_TIMEOUT_SECONDS} seconds
+ * The token is stored in the database for validation
+ */
 export const getXSRFToken = requestHandler<NoParams, NoParams, NoParams>(
 	async (req, res) => {
 		const tokenId = createCuid()

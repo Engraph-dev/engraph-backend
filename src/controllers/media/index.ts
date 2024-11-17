@@ -13,8 +13,13 @@ import type {
 	MediaEndpointRequestQuery,
 	MediaEndpointResponse,
 } from "@/util/defs/engraph-backend/media"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * This is the handler for the media endpoint.
+It handles requests to upload, download, and delete media objects from the S3 bucket.
+On request, it creates a new S3 request in the database and returns a presigned URL for the object.
+ */
 export const mediaHandler = requestHandler<
 	NoParams,
 	MediaEndpointRequestBody,
@@ -98,6 +103,11 @@ export const mediaHandler = requestHandler<
 	})
 })
 
+/**
+ * This is the handler for the media callback endpoint.
+ * It handles callbacks from the S3 bucket after an object has been uploaded or deleted.
+ * On request, it updates the S3 request status in the database.
+ */
 export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 	async (req, res) => {
 		const {

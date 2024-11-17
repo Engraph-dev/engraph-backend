@@ -10,8 +10,13 @@ import {
 	GetActiveSessionsResponse,
 	GetSessionResponse,
 } from "@/util/defs/engraph-backend/orgs/me/sessions/me"
-import { requestHandler } from "@/util/http/helpers"
+import { requestHandler } from "@/util/http/wrappers"
 
+/**
+ * This is the handler for the session endpoint.
+ * It handles requests to get the current session.
+ * Requires authentication
+ */
 export const getCurrentSession = requestHandler(async (req, res) => {
 	const sessionInfo = await db.session.findFirstOrThrow({
 		where: {
@@ -47,6 +52,11 @@ export const getCurrentSession = requestHandler(async (req, res) => {
 	})
 })
 
+/**
+ * This is the handler for the active sessions endpoint.
+ * It handles requests to get all active sessions for the current user.
+ * Requires authentication
+ */
 export const getActiveSessions = requestHandler(async (req, res) => {
 	const activeSessions = await db.session.findMany({
 		where: {
@@ -78,6 +88,11 @@ export const getActiveSessions = requestHandler(async (req, res) => {
 	})
 })
 
+/**
+ * This is the handler for the end-session endpoint.
+ * It handles requests to end the current session.
+ * Requires authentication
+ */
 export const endCurrentSession = requestHandler(async (req, res) => {
 	await db.session.update({
 		where: {
@@ -103,6 +118,12 @@ export const endCurrentSession = requestHandler(async (req, res) => {
 		responseStatus: "SUCCESS",
 	})
 })
+
+/**
+ * This is the handler for the end-session-by-id endpoint.
+ * It handles requests to end a session by its ID.
+ * Requires authentication
+ */
 export const endSessionById = requestHandler<EndSessionParams>(
 	async (req, res) => {
 		const { sessionId } = req.params
@@ -110,6 +131,10 @@ export const endSessionById = requestHandler<EndSessionParams>(
 		await db.session.update({
 			where: {
 				sessionId: sessionId,
+				userId: req.currentSession!.userId,
+				sessionEndTimestamp: {
+					gt: new Date(),
+				},
 			},
 			data: {
 				sessionEndTimestamp: new Date(),

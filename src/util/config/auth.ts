@@ -1,5 +1,5 @@
 import { envVar } from "../env"
-import { NODE_ENV } from "./http"
+import { NODE_ENV, USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "./http"
 import type { CorsOptions } from "cors"
 
 export const AUTH_COOKIE_NAME = envVar("AUTH_COOKIE_NAME")
@@ -32,7 +32,9 @@ export const PROD_ORIGINS = [`${WEB_PROTO}://${WEB_ORIGIN}`]
 export const CORS_CONFIG: CorsOptions = {
 	credentials: true,
 	origin: NODE_ENV === "development" ? DEV_ORIGINS : PROD_ORIGINS,
-	allowedHeaders: ["Content-Type", AUTH_HEADER_NAME, "Cache-Control"],
+	allowedHeaders: USE_XSRF_PROTECTION
+		? ["Content-Type", AUTH_HEADER_NAME, XSRF_HEADER_NAME, "Cache-Control"]
+		: ["Content-Type", AUTH_HEADER_NAME, "Cache-Control"],
 }
 
 type CookieOptions = Record<string, string | undefined>
