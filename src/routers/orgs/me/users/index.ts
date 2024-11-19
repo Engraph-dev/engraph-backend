@@ -41,7 +41,6 @@ usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 
 usersRouter.get<"/", NoParams, NoParams, NoParams, GetUsersQuery, NoParams>(
 	"/",
-	xsrfProtection,
 	validateParams({
 		queryParams: PagedQueryValidator,
 	}),
