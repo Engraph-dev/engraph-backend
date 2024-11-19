@@ -1,4 +1,4 @@
-import { EventType, UserRole } from "@prisma/client"
+import { EventType, OrgPlan, UserRole } from "@prisma/client"
 import { hashSync } from "bcryptjs"
 
 import { createCuid } from "@/util/app"
@@ -40,6 +40,7 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 					IdentSuffixType.MiniCuid,
 				),
 				orgName: orgName,
+				orgPlan: OrgPlan.Hobby,
 				orgUsers: {
 					create: {
 						userId: userId,

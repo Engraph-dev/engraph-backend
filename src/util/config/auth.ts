@@ -1,10 +1,8 @@
+import { featureFlag } from "."
 import type { CorsOptions } from "cors"
 
-
-
-import { NODE_ENV, USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "@/util/config/http";
-import { envVar } from "@/util/env";
-
+import { USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "@/util/config/http"
+import { envVar } from "@/util/env"
 
 export const AUTH_COOKIE_NAME = envVar("AUTH_COOKIE_NAME")
 export const AUTH_HEADER_NAME = envVar("AUTH_HEADER_NAME")
@@ -35,7 +33,7 @@ export const PROD_ORIGINS = [`${WEB_PROTO}://${WEB_ORIGIN}`]
 
 export const CORS_CONFIG: CorsOptions = {
 	credentials: true,
-	origin: NODE_ENV === "development" ? DEV_ORIGINS : PROD_ORIGINS,
+	origin: featureFlag(DEV_ORIGINS, PROD_ORIGINS),
 	allowedHeaders: USE_XSRF_PROTECTION
 		? ["Content-Type", AUTH_HEADER_NAME, XSRF_HEADER_NAME, "Cache-Control"]
 		: ["Content-Type", AUTH_HEADER_NAME, "Cache-Control"],
@@ -56,9 +54,9 @@ export const DEV_COOKIE_OPTIONS: CookieOptions = {
 
 export const SESSION_VALIDITY_SECONDS = 7 /*d*/ * 24 /*h*/ * 60 /*m*/ * 60 /*s*/
 
-export const JWT_SECRET_EXPOSED_SILENT_FAIL = false
-export const SESSION_ID_SILENT_FAIL = false
-export const SESSION_EXPIRY_SILENT_FAIL = false
-export const STRICT_SESSION_IP_UA_CHECK = false
+export const ALLOW_MALFORMED_JWT = false
+export const ALLOW_NON_DB_SESSION_ID = false
+export const ALLOW_EXPIRED_SESSIONS = false
+export const STRICT_CHECK_SESSION_IP_UA = false
 
 export const VERIFY_EMAIL = true

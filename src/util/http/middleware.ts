@@ -1,18 +1,18 @@
+import { featureFlag } from "../config"
 import { LogLevel, log } from "../log"
 import { UserRole } from "@prisma/client"
 import cors from "cors"
 import rateLimit from "express-rate-limit"
 
 import {
+	ALLOW_EXPIRED_SESSIONS,
+	ALLOW_NON_DB_SESSION_ID,
 	CORS_CONFIG,
-	SESSION_EXPIRY_SILENT_FAIL,
-	SESSION_ID_SILENT_FAIL,
-	STRICT_SESSION_IP_UA_CHECK,
+	STRICT_CHECK_SESSION_IP_UA,
 } from "@/util/config/auth"
 import {
 	ACTION_RATE_LIMIT_CONFIG,
 	GET_RATE_LIMIT_CONFIG,
-	NODE_ENV,
 	USE_XSRF_PROTECTION,
 	XSRF_HEADER_NAME,
 } from "@/util/config/http"
@@ -468,7 +468,7 @@ export const devRequestLogger = middlewareHandler((req, res, next) => {
 const baseCorsHandler = cors(CORS_CONFIG)
 
 export const corsHelper = middlewareHandler((req, res, next) => {
-	const isDevelopment = NODE_ENV === "development"
+	const isDevelopment = featureFlag()
 	const originHeader = req.headers["origin"]
 	if (!isDevelopment && !originHeader) {
 		return res.status(StatusCodes.TEAPOT).json({
@@ -498,7 +498,7 @@ export const authParser = middlewareHandler(async (req, res, next) => {
 			},
 		})
 		if (!dbSession) {
-			if (!SESSION_ID_SILENT_FAIL) {
+			if (!ALLOW_NON_DB_SESSION_ID) {
 				throw new Error(
 					`Session ${jwtData.sessionId} not found in the database!`,
 				)
@@ -506,12 +506,12 @@ export const authParser = middlewareHandler(async (req, res, next) => {
 		}
 
 		if (dbSession && dbSession.sessionEndTimestamp <= new Date()) {
-			if (!SESSION_EXPIRY_SILENT_FAIL) {
+			if (!ALLOW_EXPIRED_SESSIONS) {
 				throw new Error(
 					`Expired / Closed session ${dbSession.sessionId} was used`,
 				)
 			}
-			if (STRICT_SESSION_IP_UA_CHECK) {
+			if (STRICT_CHECK_SESSION_IP_UA) {
 				const reqIp = req.ip || ""
 				const reqUa = req.headers["user-agent"] || ""
 				if (

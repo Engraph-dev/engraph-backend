@@ -2,10 +2,10 @@ import type { IRequest, SessionJwtContent } from "."
 import { verify } from "jsonwebtoken"
 
 import {
+	ALLOW_MALFORMED_JWT,
 	AUTH_COOKIE_NAME,
 	AUTH_HEADER_NAME,
 	JWT_SECRET,
-	JWT_SECRET_EXPOSED_SILENT_FAIL,
 } from "@/util/config/auth"
 
 export type ParsedJwtData =
@@ -35,7 +35,7 @@ export function parseJwtFromRequest(req: IRequest): ParsedJwtData {
 		const parsedData = verify(authString, JWT_SECRET) as SessionJwtContent
 
 		if (!parsedData || typeof parsedData.sessionId !== "string") {
-			if (!JWT_SECRET_EXPOSED_SILENT_FAIL) {
+			if (!ALLOW_MALFORMED_JWT) {
 				throw new Error(
 					"Session ID was not found in the jwt! The environment secrets may have been leaked!",
 				)

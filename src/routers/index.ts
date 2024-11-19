@@ -1,10 +1,14 @@
-import { mediaRouter } from "@/routers/media"
-import { orgRouter } from "@/routers/orgs"
-import { xsrfRouter } from "@/routers/xsrf"
 import { heartbeatCheck, metricsCheck } from "@/controllers"
 import { Router } from "express"
 
+import { eventRouter } from "@/routers/events"
+import { mediaRouter } from "@/routers/media"
+import { orgRouter } from "@/routers/orgs"
+import { xsrfRouter } from "@/routers/xsrf"
+
 const indexRouter = Router({ mergeParams: true })
+
+indexRouter.use("/events", eventRouter)
 
 indexRouter.use("/orgs", orgRouter)
 

@@ -19,6 +19,13 @@ export const MetadataTypes = {
 	Boolean: false,
 	Object: {} as object,
 }
+
+/**
+ * Mapping of event types to their metadata object.
+ * This is used to validate the metadata object before logging the event.
+ * The metadata object is expected to have the same keys as the mapping object.
+ * The values of the mapping object are the expected types of the metadata object.
+ */
 export const metadataMapping = {
 	[EventType.OrgCreate]: {},
 	[EventType.OrgUpdate]: {},

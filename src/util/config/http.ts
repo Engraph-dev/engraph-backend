@@ -1,4 +1,4 @@
-import type { Options as RateLimitOptions } from "express-rate-limit"
+import type { Options as RateLimitOptions } from "express-rate-limit";
 
 
 
@@ -6,6 +6,7 @@ import { createCuid } from "@/util/app";
 import type { ResJSON } from "@/util/defs/engraph-backend/common";
 import { envVar } from "@/util/env";
 import type { IRequest, IResponse } from "@/util/http";
+import { featureFlag } from ".";
 
 
 export const DEFAULT_PAGINATION_SIZE = 10
@@ -22,7 +23,7 @@ export const XSRF_HEADER_NAME = USE_XSRF_PROTECTION
 	: ""
 export const XSRF_TIMEOUT_SECONDS = 60
 
-export const USE_RATE_LIMIT = true
+export const USE_RATE_LIMIT = featureFlag()
 export const RATE_LIMIT_WINDOW_SECONDS = 300
 export const GET_RATE_LIMIT_WINDOW = 100
 export const NON_GET_RATE_LIMIT_WINDOW = 25
