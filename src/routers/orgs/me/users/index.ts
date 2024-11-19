@@ -15,7 +15,7 @@ import type {
 	GetUsersQuery,
 } from "@/util/defs/engraph-backend/orgs/me/users"
 import type { UserId } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
-import { validateParams } from "@/util/http/middleware"
+import { validateParams, xsrfProtection } from "@/util/http/middleware"
 import {
 	IN_ENUM,
 	NULLISH,
@@ -41,6 +41,7 @@ usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 
 usersRouter.get<"/", NoParams, NoParams, NoParams, GetUsersQuery, NoParams>(
 	"/",
+	xsrfProtection,
 	validateParams({
 		queryParams: PagedQueryValidator,
 	}),

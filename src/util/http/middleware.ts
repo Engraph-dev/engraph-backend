@@ -538,6 +538,7 @@ export const xsrfParser = middlewareHandler(async (req, res, next) => {
 	}
 
 	const xsrfToken = req.headers[XSRF_HEADER_NAME.toLowerCase()]
+	log("xsrf", LogLevel.Debug, `XSRF Token: ${xsrfToken || "Not Sent"}`)
 	if (typeof xsrfToken !== "string") {
 		return next()
 	}
