@@ -1,9 +1,12 @@
-import { featureFlag } from "../config"
-import { LogLevel, log } from "../log"
 import { UserRole } from "@prisma/client"
 import cors from "cors"
 import rateLimit from "express-rate-limit"
 
+import {
+	ErrorArgMapping,
+	validateErrorArgs,
+} from "@/util/app/helpers/error-codes"
+import { featureFlag } from "@/util/config"
 import {
 	ALLOW_EXPIRED_SESSIONS,
 	ALLOW_NON_DB_SESSION_ID,
@@ -23,10 +26,76 @@ import {
 	ReqMethod,
 	StatusCodes,
 } from "@/util/defs/engraph-backend/common"
-import { ErrorCode } from "@/util/defs/engraph-backend/errors"
+import { ErrorCode, ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import type { IRequest, ReqUserSession } from "@/util/http"
 import { parseJwtFromRequest } from "@/util/http/helpers"
 import { middlewareHandler } from "@/util/http/wrappers"
+import { LogLevel, log } from "@/util/log"
+
+type InvalidParamWrapperArg<ErrCodeT extends ErrorCode> = {
+	errorCode: ErrCodeT
+	errorArgs: (typeof ErrorArgMapping)[ErrCodeT]
+}
+
+function getInverseErrorCodeName(errorCode: ErrorCode): string {
+	const errCodeEntries = Object.entries(ErrorCodes)
+	const targetPair = errCodeEntries.find(([errName, errCodeValue]) => {
+		return errCodeValue === errorCode
+	}) || [getInverseErrorCodeName(ErrorCodes.Unknown), ErrorCodes.Unknown]
+
+	return targetPair[0]
+}
+
+export function invalidParam<ErrCodeT extends ErrorCode>(
+	args: InvalidParamWrapperArg<ErrCodeT>,
+): ValidatorFunctionRet {
+	const { errorArgs, errorCode } = args
+	const codeName = getInverseErrorCodeName(errorCode)
+
+	if (errorArgs === undefined) {
+		log(
+			"middleware.validate",
+			LogLevel.Error,
+			`No Error Arguments were supplied to errorCode ${errorCode}(${codeName}). Did you wrap it with invalidParam()`,
+		)
+
+		// It will eventually fail in the next step
+		// @ts-expect-error This will fail since a lot of error code mappings have args, but this generic replacement doesn't
+		return invalidParam({
+			errorCode: errorCode,
+			errorArgs: {},
+		})
+	}
+
+	const valResult = validateErrorArgs(errorCode, errorArgs)
+
+	const { missingKeys, objectValid, typeErrors } = valResult
+
+	if (objectValid) {
+		return {
+			validationPass: false,
+			errorCode: errorCode,
+			errorArgs: errorArgs,
+		}
+	}
+
+	const missingKeyErrors = (missingKeys as string[]).map((missingKey) => {
+		return `Missing error arg key: ${missingKey} for error type: ${errorCode} (${codeName})`
+	})
+
+	const typeErrorsStr = typeErrors.map((typeError) => {
+		return `Invalid Error Arg for error type ${errorCode} (${codeName}): ${typeError.errorArgKey} expected type: ${typeError.expectedType}, received type: ${typeError.receivedType}`
+	})
+
+	const errorMessages = [...missingKeyErrors, ...typeErrorsStr]
+	log("middleware.validate", LogLevel.Error, errorMessages.join("\n"))
+
+	return {
+		validationPass: false,
+		errorCode: ErrorCodes.Unknown,
+		errorArgs: {},
+	}
+}
 
 export type ValidatorFunctionRet =
 	| {
@@ -35,7 +104,7 @@ export type ValidatorFunctionRet =
 	| {
 			validationPass: false
 			errorCode: ErrorCode
-			errorArgs?: any
+			errorArgs: any
 	  }
 
 export type ValidatorFunction<
@@ -170,6 +239,102 @@ export function restrictEndpoint(args: ValidateAuthArgs) {
 	})
 }
 
+function safeWrapValidatorFn<
+	T,
+	ParamT extends {} = {},
+	BodyT extends {} = {},
+	QueryT extends {} = {},
+>(
+	valFn: ValidatorFunction<T, ParamT, BodyT, QueryT>,
+): ValidatorFunction<T, ParamT, BodyT, QueryT> {
+	// @ts-expect-error
+	return async function (valueToValidate, req) {
+		try {
+			const valResult = await valFn(valueToValidate, req)
+			if (Array.isArray(valResult)) {
+				const mappedResults = valResult.map((valRes) => {
+					if (valRes.validationPass) {
+						return {
+							validationPass: true,
+						}
+					}
+
+					return invalidParam({
+						errorCode: valRes.errorCode,
+						errorArgs: valRes.errorArgs,
+					})
+				})
+
+				return mappedResults
+			}
+
+			if (valResult.validationPass) {
+				return {
+					validationPass: true,
+				}
+			}
+
+			return invalidParam({
+				errorCode: valResult.errorCode,
+				errorArgs: valResult.errorArgs,
+			})
+		} catch (e) {
+			return invalidParam({
+				errorCode: ErrorCodes.Unknown,
+				errorArgs: {},
+			})
+		}
+	}
+}
+
+function errorWrapBatchValidator<
+	DataT,
+	ParamT extends {} = {},
+	BodyT extends {} = {},
+	QueryT extends {} = {},
+>(
+	batchFn: BatchValidatorFunction<DataT, ParamT, BodyT, QueryT>,
+): BatchValidatorFunction<DataT, ParamT, BodyT, QueryT> {
+	// @ts-expect-error
+	return async function (batchData, req) {
+		try {
+			const valResult = await batchFn(batchData, req)
+
+			if (Array.isArray(valResult)) {
+				const mappedResults = valResult.map((valRes) => {
+					if (valRes.validationPass) {
+						return {
+							validationPass: true,
+						}
+					}
+
+					return invalidParam({
+						errorCode: valRes.errorCode,
+						errorArgs: valRes.errorArgs,
+					})
+				})
+
+				return mappedResults
+			}
+
+			if (valResult.validationPass) {
+				return {
+					validationPass: true,
+				}
+			}
+
+			return invalidParam({
+				errorCode: valResult.errorCode,
+				errorArgs: valResult.errorArgs,
+			})
+		} catch (e) {
+			return invalidParam({
+				errorCode: ErrorCodes.Unknown,
+				errorArgs: {},
+			})
+		}
+	}
+}
 export function validateParams<
 	ParamT extends {} = {},
 	BodyT extends {} = {},
@@ -191,10 +356,11 @@ export function validateParams<
 		) => {
 			const validatorKeys = Object.keys(objValidator) as (keyof DataT)[]
 			const validationResults = await Promise.all(
-				validatorKeys.map(async (key) => {
-					const dataValue = dataObj[key]
-					const validatorFn = objValidator[key]
-					let validationResult = await validatorFn(dataValue, req)
+				validatorKeys.map(async (validatorKey) => {
+					const dataValue = dataObj[validatorKey]
+					const validatorFn = objValidator[validatorKey]
+					const wrappedFn = safeWrapValidatorFn(validatorFn)
+					let validationResult = await wrappedFn(dataValue, req)
 
 					if (!Array.isArray(validationResult)) {
 						validationResult = [{ ...validationResult }]
@@ -205,7 +371,7 @@ export function validateParams<
 							if (!valRes.validationPass) {
 								return {
 									paramType: objType,
-									paramName: key,
+									paramName: validatorKey,
 									errorCode: valRes.errorCode,
 									errorArgs: valRes.errorArgs,
 								}
@@ -219,12 +385,7 @@ export function validateParams<
 				}),
 			)
 
-			const flatValidationResults = validationResults.reduce(
-				(prevVal, currVal) => {
-					return [...prevVal, ...currVal]
-				},
-				[] as InvalidParam<ParamT, BodyT, QueryT>[],
-			)
+			const flatValidationResults = validationResults.flat()
 
 			const filteredValidationResults = flatValidationResults.filter(
 				(valResult) => {
@@ -241,7 +402,9 @@ export function validateParams<
 			objType: ParamType,
 		): Promise<InvalidParam<ParamT, BodyT, QueryT>[]> => {
 			const { targetParams, validatorFunction } = batchValidator
-			let validationResult = await validatorFunction(dataObj, req)
+			const wrappedBatchValidator =
+				errorWrapBatchValidator(validatorFunction)
+			let validationResult = await wrappedBatchValidator(dataObj, req)
 			if (!Array.isArray(validationResult)) {
 				validationResult = [{ ...validationResult }]
 			}
@@ -264,11 +427,7 @@ export function validateParams<
 				}
 			})
 
-			const flatValidationResult = mappedValidationResults.reduce(
-				(prevArr, currArr) => {
-					return [...prevArr, ...currArr]
-				},
-			) satisfies InvalidParam<ParamT, BodyT, QueryT>[]
+			const flatValidationResult = mappedValidationResults.flat()
 
 			return flatValidationResult
 		}
@@ -284,12 +443,7 @@ export function validateParams<
 				}),
 			)
 
-			const flatValidationResult = mappedBatchValdationResults.reduce(
-				(prevArr, currArr) => {
-					return [...prevArr, ...currArr]
-				},
-				[] satisfies InvalidParam<ParamT, BodyT, QueryT>[],
-			)
+			const flatValidationResult = mappedBatchValdationResults.flat()
 
 			return flatValidationResult
 		}
@@ -329,11 +483,7 @@ export function validateParams<
 
 		const resolvedValidation = await Promise.all(validationPromises)
 
-		const mergedValidation = resolvedValidation.reduce(
-			(prevVal, currVal) => {
-				return [...prevVal, ...currVal]
-			},
-		)
+		const mergedValidation = resolvedValidation.flat()
 
 		if (mergedValidation.length) {
 			return res.status(StatusCodes.BAD_REQUEST).json({
@@ -502,12 +652,24 @@ export const authParser = middlewareHandler(async (req, res, next) => {
 				throw new Error(
 					`Session ${jwtData.sessionId} not found in the database!`,
 				)
+			} else {
+				log(
+					"auth",
+					LogLevel.Warn,
+					`Session ${jwtData.sessionId} not found in the database!`,
+				)
 			}
 		}
 
 		if (dbSession && dbSession.sessionEndTimestamp <= new Date()) {
 			if (!ALLOW_EXPIRED_SESSIONS) {
 				throw new Error(
+					`Expired / Closed session ${dbSession.sessionId} was used`,
+				)
+			} else {
+				log(
+					"auth",
+					LogLevel.Warn,
 					`Expired / Closed session ${dbSession.sessionId} was used`,
 				)
 			}
@@ -519,6 +681,12 @@ export const authParser = middlewareHandler(async (req, res, next) => {
 					dbSession.sessionUA !== reqUa
 				) {
 					throw new Error(
+						`Session ${dbSession.sessionId} IP/UA mismatch!`,
+					)
+				} else {
+					log(
+						"auth",
+						LogLevel.Warn,
 						`Session ${dbSession.sessionId} IP/UA mismatch!`,
 					)
 				}

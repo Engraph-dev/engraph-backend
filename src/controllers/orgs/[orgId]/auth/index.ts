@@ -2,10 +2,10 @@ import { EventType } from "@prisma/client"
 import { compare } from "bcryptjs"
 import { sign } from "jsonwebtoken"
 
-import { createCuid } from "@/util/app"
-import { createAndSendVerificationToken } from "@/util/app/auth"
 import { getEventData, logEvent } from "@/util/app/events"
-import { cookieOptions } from "@/util/app/http"
+import { createCuid } from "@/util/app/helpers"
+import { createAndSendVerificationToken } from "@/util/app/helpers/auth"
+import { cookieOptions } from "@/util/app/helpers/http"
 import {
 	AUTH_COOKIE_NAME,
 	JWT_SECRET,
@@ -25,6 +25,7 @@ import type {
 } from "@/util/defs/engraph-backend/orgs/me/auth"
 import type { SessionJwtContent } from "@/util/http"
 import { requestHandler } from "@/util/http/wrappers"
+import type { ErrorArgMapping } from "@/util/app/helpers/error-codes"
 
 /**
  * This is the handler for the login endpoint.
@@ -72,6 +73,7 @@ export const loginCredentials = requestHandler<
 					paramType: "BODY",
 					paramName: "userMail",
 					errorCode: ErrorCodes.IdentityNotFound,
+					errorArgs: {} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.IdentityNotFound],
 				},
 			],
 		})
@@ -87,6 +89,7 @@ export const loginCredentials = requestHandler<
 					paramType: "BODY",
 					paramName: "userPassword",
 					errorCode: ErrorCodes.PasswordMismatch,
+					errorArgs: {} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.PasswordMismatch],
 				},
 			],
 		})

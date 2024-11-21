@@ -15,5 +15,13 @@ export function log(serviceName: string, logLevel: LogLevel, ...data: any[]) {
 	if (!logMessage) {
 		return
 	}
-	console[logLevel](`[${serviceName}:${logLevel}] ${data.join(" ")}`)
+
+	const mappedData = data.map((dataObj) => {
+		if (typeof dataObj === "object") {
+			return JSON.stringify(dataObj, null, 4)
+		}
+		return dataObj
+	})
+
+	console[logLevel](`[${serviceName}:${logLevel}] ${mappedData.join(" ")}`)
 }

@@ -1,6 +1,6 @@
 import { hashSync } from "bcryptjs"
 
-import { getMiniUser } from "@/util/app/users"
+import { getMiniUser } from "@/util/app/helpers/users"
 import { BCRYPT_SALT_ROUNDS } from "@/util/config/auth"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"

@@ -1,13 +1,13 @@
 import { EventType, OrgPlan, UserRole } from "@prisma/client"
 import { hashSync } from "bcryptjs"
 
-import { createCuid } from "@/util/app"
-import { createAndSendVerificationToken } from "@/util/app/auth"
+import { getEventData, logEvent } from "@/util/app/events"
+import { createCuid } from "@/util/app/helpers"
+import { createAndSendVerificationToken } from "@/util/app/helpers/auth"
 import {
 	IdentSuffixType,
 	generateIdentifierFromString,
-} from "@/util/app/data-handlers"
-import { getEventData, logEvent } from "@/util/app/events"
+} from "@/util/app/helpers/data-handlers"
 import { BCRYPT_SALT_ROUNDS, VERIFY_EMAIL } from "@/util/config/auth"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -40,7 +40,7 @@ export const createOrg = requestHandler<NoParams, CreateOrgBody, NoParams>(
 					IdentSuffixType.MiniCuid,
 				),
 				orgName: orgName,
-				orgPlan: OrgPlan.Hobby,
+				orgPlan: OrgPlan.None,
 				orgUsers: {
 					create: {
 						userId: userId,

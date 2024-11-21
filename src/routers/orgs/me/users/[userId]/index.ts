@@ -23,7 +23,7 @@ import {
 
 const userIdRouter = Router({ mergeParams: true })
 
-userIdRouter.put<
+userIdRouter.patch<
 	"/",
 	UpdateUserParams,
 	NoParams,

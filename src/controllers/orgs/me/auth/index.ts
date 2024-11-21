@@ -1,5 +1,6 @@
 import { compare } from "bcryptjs"
 
+import type { ErrorArgMapping } from "@/util/app/helpers/error-codes"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
@@ -38,6 +39,8 @@ export const dangerZone = requestHandler<NoParams, DangerZoneBody, NoParams>(
 					paramType: "BODY",
 					paramName: "userPassword",
 					errorCode: ErrorCodes.PasswordMismatch,
+					errorArgs:
+						{} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.PasswordMismatch],
 				},
 			],
 		})

@@ -1,4 +1,4 @@
-import { createCuid, createMiniCuid } from "@/util/app"
+import { createCuid, createMiniCuid } from "@/util/app/helpers"
 import type { ContentType } from "@/util/config/media"
 import { IRequest } from "@/util/http"
 import { IS_OBJECT_URL, isValidationSuccess } from "@/util/http/validators"
@@ -33,10 +33,11 @@ export async function matchUrlWithContentTypes(
 
 export enum IdentSuffixType {
 	// 25-character wide CUID
-	Cuid,
-	// 
-	MiniCuid,
-	None,
+	Cuid = 25,
+	// 8-character wide CUID
+	MiniCuid = 8,
+	// No Suffix
+	None = 0,
 }
 
 export function generateIdentifierFromString(

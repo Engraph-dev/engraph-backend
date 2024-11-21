@@ -1,60 +1,44 @@
-import { AWS_CLOUDFRONT_BASE_URL } from "../config/s3"
 import validator from "validator"
 
 import { ContentType } from "@/util/config/media"
+import { S3_ORIGIN, S3_ORIGIN_PROTOCOL } from "@/util/config/s3"
 import db from "@/util/db"
+import type { MakeOptional } from "@/util/defs/engraph-backend/common"
 import { type ErrorCode, ErrorCodes } from "@/util/defs/engraph-backend/errors"
-import { ValidatorFunction, ValidatorFunctionRet } from "@/util/http/middleware"
+import {
+	type BatchValidator,
+	ValidatorFunction,
+	ValidatorFunctionRet,
+	invalidParam,
+} from "@/util/http/middleware"
 
 export type VarType = "string" | "number" | "boolean" | "object" | "date"
 
-type MapFunctionToValidatorArgs<
+export function NULLISH_BATCH<
 	DataT,
-	RetT extends string,
-	ParamT extends {} = {},
-	BodyT extends {} = {},
-	QueryT extends {} = {},
-> = {
-	innerFn: (value: DataT) => RetT | Promise<RetT>
-	mapResult: (result: RetT) => ErrorCode | ErrorCode[] | undefined
-}
-
-export function mapToValidator<
-	DataT,
-	RetT extends string,
 	ParamT extends {} = {},
 	BodyT extends {} = {},
 	QueryT extends {} = {},
 >(
-	args: MapFunctionToValidatorArgs<DataT, RetT, ParamT, BodyT, QueryT>,
-): ValidatorFunction<DataT, ParamT, BodyT, QueryT> {
-	return async function (value, req) {
-		const fnResult = await args.innerFn(value)
-		const valResult = args.mapResult(fnResult)
-		if (valResult === undefined) {
-			return {
-				validationPass: true,
+	batchValidator: BatchValidator<DataT, ParamT, BodyT, QueryT>,
+): BatchValidator<MakeOptional<DataT>, ParamT, BodyT, QueryT> {
+	const { targetParams, validatorFunction } = batchValidator
+	return {
+		targetParams: targetParams,
+		validatorFunction: async (batchParams, req) => {
+			const nullishParams = targetParams.filter((paramName) => {
+				return (
+					batchParams[paramName] === null ||
+					batchParams[paramName] === undefined
+				)
+			})
+			if (nullishParams.length) {
+				return {
+					validationPass: true,
+				}
 			}
-		}
-		if (!Array.isArray(valResult)) {
-			return [
-				{
-					validationPass: false,
-					errorCode: valResult,
-				},
-			]
-		}
-		if (valResult.length === 0) {
-			return {
-				validationPass: true,
-			}
-		}
-		return valResult.map((valRes) => {
-			return {
-				validationPass: false,
-				errorCode: valRes,
-			}
-		})
+			return validatorFunction(batchParams as DataT, req)
+		},
 	}
 }
 
@@ -69,10 +53,10 @@ export function NOT_NULLISH<
 ): ValidatorFunction<T | null | undefined, ParamT, BodyT, QueryT> {
 	return async (value, req) => {
 		if (value === null || value === undefined) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.NullOrUndefined,
-			}
+				errorArgs: {},
+			})
 		}
 		return innerFn(value, req)
 	}
@@ -111,31 +95,28 @@ export function EXPECT_TYPE<
 		if (type === "date") {
 			const dateObj = new Date(value)
 			if (dateObj.toString() === "Invalid Date") {
-				return {
-					validationPass: false,
+				return invalidParam({
 					errorCode: ErrorCodes.InvalidDataType,
 					errorArgs: { expectedType: type },
-				}
+				})
 			}
 			return innerFn(value, req)
 		}
 		if (type === "number") {
 			const parsedValue = Number.parseFloat(value)
 			if (Number.isNaN(parsedValue) || !Number.isFinite(parsedValue)) {
-				return {
-					validationPass: false,
+				return invalidParam({
 					errorCode: ErrorCodes.InvalidDataType,
 					errorArgs: { expectedType: type },
-				}
+				})
 			}
 			return innerFn(value, req)
 		}
 		if (typeof value !== type) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.InvalidDataType,
 				errorArgs: { expectedType: type },
-			}
+			})
 		}
 		return innerFn(value, req)
 	}
@@ -153,19 +134,17 @@ export function EXPECT_ARR_TYPE<
 ): ValidatorFunction<any, ParamT, BodyT, QueryT> {
 	return async (value, req) => {
 		if (!Array.isArray(value)) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.InvalidDataType,
 				errorArgs: { expectedType: `array` },
-			}
+			})
 		}
 		for (const elem of value) {
 			if (typeof elem !== type) {
-				return {
-					validationPass: false,
+				return invalidParam({
 					errorCode: ErrorCodes.InvalidDataType,
 					errorArgs: { expectedType: `array` },
-				}
+				})
 			}
 		}
 		return innerFn(value, req)
@@ -183,27 +162,41 @@ export function FOR_EACH<
 ): ValidatorFunction<T[], ParamT, BodyT, QueryT> {
 	return async (value, req) => {
 		if (!Array.isArray(value)) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.InvalidDataType,
 				errorArgs: { expectedType: `array` },
-			}
+			})
 		}
 		const valErrorAcc = await Promise.all(
-			value.map((elem) => {
-				return innerFn(elem, req)
+			value.map(async (elem, elemIdx) => {
+				let innerValue = await innerFn(elem, req)
+				if (!Array.isArray(innerValue)) {
+					innerValue = [innerValue]
+				}
+				return [elemIdx, innerValue] as [number, typeof innerValue]
 			}),
 		)
-		const flatErrorAcc = valErrorAcc.flat().filter((valRes) => {
-			return valRes.validationPass === false
+		const flatErrorAcc = valErrorAcc.filter(([valIndex, valRes]) => {
+			const everyValPass = valRes.every((valRe) => {
+				return valRe.validationPass === true
+			})
+			return !everyValPass
 		})
 		if (flatErrorAcc.length) {
+			const collectedErrors = flatErrorAcc.map(([elemIdx, accErrors]) => {
+				return accErrors
+			})
+			const flatCollectedErrors = collectedErrors.flat()
 			return [
-				{
-					validationPass: false,
-					errorCode: "E3005",
-				},
-				...flatErrorAcc,
+				invalidParam({
+					errorCode: ErrorCodes.ArrElemInvalid,
+					errorArgs: {
+						invalidIndexes: flatErrorAcc.map(
+							([valIndex]) => valIndex,
+						),
+					},
+				}),
+				...flatCollectedErrors,
 			]
 		} else {
 			return {
@@ -221,6 +214,7 @@ export function ANY_OF<
 >(
 	valFns: ValidatorFunction<T, ParamT, BodyT, QueryT>[],
 ): ValidatorFunction<T, ParamT, BodyT, QueryT> {
+	// @ts-expect-error
 	return async (val, req) => {
 		const resultAcc: ValidatorFunctionRet[][] = await Promise.all(
 			valFns.map(async (validatorFn) => {
@@ -245,7 +239,19 @@ export function ANY_OF<
 			}
 		}
 
-		return flatResultAcc
+		const mappedResultAcc = flatResultAcc.map((valResult) => {
+			if (valResult.validationPass) {
+				return {
+					validationPass: true,
+				}
+			}
+			return invalidParam({
+				errorCode: valResult.errorCode,
+				errorArgs: valResult.errorArgs,
+			})
+		})
+
+		return mappedResultAcc
 	}
 }
 
@@ -303,11 +309,10 @@ export function FORCE_FAIL<T>(
 	errorArgs: any = undefined,
 ): ValidatorFunction<T> {
 	return function () {
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: errorCode,
 			errorArgs: errorArgs,
-		}
+		})
 	}
 }
 
@@ -315,11 +320,10 @@ export function FORCE_FAIL<T>(
 export function STRLEN_EQ(strLen: number): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
 		if (value.length !== strLen) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.ExactStringLength,
 				errorArgs: { expectedLength: strLen },
-			}
+			})
 		}
 		return { validationPass: true }
 	})
@@ -329,10 +333,10 @@ export function STRLEN_EQ(strLen: number): ValidatorFunction<string> {
 export function STR_NOT_EMPTY(): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
 		if (value.length === 0) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.EmptyString,
-			}
+				errorArgs: {},
+			})
 		}
 		return { validationPass: true }
 	})
@@ -342,11 +346,10 @@ export function STR_NOT_EMPTY(): ValidatorFunction<string> {
 export function STRLEN_MIN(minLen: number): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
 		if (value.length < minLen) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MinStringLength,
 				errorArgs: { minLength: minLen },
-			}
+			})
 		}
 		return { validationPass: true }
 	})
@@ -356,11 +359,10 @@ export function STRLEN_MIN(minLen: number): ValidatorFunction<string> {
 export function STRLEN_MAX(maxLen: number): ValidatorFunction<string> {
 	return (value) => {
 		if (value.length > maxLen) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MaxStringLength,
 				errorArgs: { maxLength: maxLen },
-			}
+			})
 		}
 		return { validationPass: true }
 	}
@@ -373,11 +375,10 @@ export function STRLEN_MIN_MAX(
 ): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
 		if (value.length < minLen || value.length > maxLen) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MinMaxStringLength,
 				errorArgs: { minLength: minLen, maxLength: maxLen },
-			}
+			})
 		}
 		return { validationPass: true }
 	})
@@ -389,10 +390,47 @@ export function IS_URL(): ValidatorFunction<string> {
 			new URL(value)
 			return { validationPass: true }
 		} catch (e) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.InvalidUrl,
+				errorArgs: {
+					urlOrigin: "",
+					urlProtocol: "",
+				},
+			})
+		}
+	})
+}
+
+type MatchUrlOpts = {
+	origin?: string
+	protocol?: string
+}
+
+export function MATCH_URL(urlOpts: MatchUrlOpts): ValidatorFunction<string> {
+	return EXPECT_TYPE<string>("string", (urlLike, req) => {
+		try {
+			const urlObj = new URL(urlLike)
+			const {
+				origin: urlOrigin = urlObj.origin,
+				protocol: urlProto = urlObj.protocol,
+			} = urlOpts
+			if (urlOrigin !== urlObj.origin || urlProto !== urlObj.protocol) {
+				return invalidParam({
+					errorCode: ErrorCodes.InvalidUrl,
+					errorArgs: {
+						urlOrigin: urlOrigin,
+						urlProtocol: urlProto,
+					},
+				})
 			}
+			return {
+				validationPass: true,
+			}
+		} catch (e) {
+			return invalidParam({
+				errorCode: ErrorCodes.Unknown,
+				errorArgs: {},
+			})
 		}
 	})
 }
@@ -406,13 +444,12 @@ export function MATCH_REGEX(regex: RegExp) {
 			}
 		}
 
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidRegex,
 			errorArgs: {
 				regExp: regex.toString(),
 			},
-		}
+		})
 	})
 }
 
@@ -424,10 +461,10 @@ export function IS_EMAIL(): ValidatorFunction<string> {
 				validationPass: true,
 			}
 		}
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidEmail,
-		}
+			errorArgs: {},
+		})
 	})
 }
 
@@ -441,11 +478,14 @@ export function IS_OBJECT_URL(
 	return EXPECT_TYPE<string>("string", async (value) => {
 		try {
 			const urlObj = new URL(value)
-			if (urlObj.origin !== AWS_CLOUDFRONT_BASE_URL) {
-				return {
-					validationPass: false,
+			if (urlObj.origin !== S3_ORIGIN) {
+				return invalidParam({
 					errorCode: ErrorCodes.InvalidUrl,
-				}
+					errorArgs: {
+						urlOrigin: S3_ORIGIN,
+						urlProtocol: S3_ORIGIN_PROTOCOL,
+					},
+				})
 			}
 			if (args.contentTypes) {
 				const urlPath = urlObj.pathname
@@ -459,29 +499,38 @@ export function IS_OBJECT_URL(
 				})
 
 				if (dbObj === null) {
-					return {
-						validationPass: false,
+					return invalidParam({
 						errorCode: ErrorCodes.InvalidUrl,
-					}
+						errorArgs: {
+							urlOrigin: S3_ORIGIN,
+							urlProtocol: S3_ORIGIN_PROTOCOL,
+						},
+					})
 				}
 				if (
 					!(args.contentTypes as string[]).includes(
 						dbObj.objectContentType,
 					)
 				) {
-					return {
-						validationPass: false,
+					return invalidParam({
 						errorCode: ErrorCodes.InvalidUrl,
-					}
+						errorArgs: {
+							urlOrigin: S3_ORIGIN,
+							urlProtocol: S3_ORIGIN_PROTOCOL,
+						},
+					})
 				}
 				return { validationPass: true }
 			}
 			return { validationPass: true }
 		} catch (e) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.InvalidUrl,
-			}
+				errorArgs: {
+					urlOrigin: S3_ORIGIN,
+					urlProtocol: S3_ORIGIN_PROTOCOL,
+				},
+			})
 		}
 	})
 }
@@ -490,10 +539,10 @@ export function IS_OBJECT_URL(
 export function NON_ZERO(): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value === 0) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.NonZero,
-			}
+				errorArgs: {},
+			})
 		}
 		return { validationPass: true }
 	})
@@ -503,10 +552,10 @@ export function NON_ZERO(): ValidatorFunction<number> {
 export function POSITIVE(): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value <= 0) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.Positive,
-			}
+				errorArgs: {},
+			})
 		}
 		return { validationPass: true }
 	})
@@ -516,10 +565,10 @@ export function POSITIVE(): ValidatorFunction<number> {
 export function NEGATIVE(): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value >= 0) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.Negative,
-			}
+				errorArgs: {},
+			})
 		}
 		return { validationPass: true }
 	})
@@ -529,10 +578,10 @@ export function NEGATIVE(): ValidatorFunction<number> {
 export function NON_NEGATIVE(): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value < 0) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.PositiveOrZero,
-			}
+				errorArgs: {},
+			})
 		}
 		return { validationPass: true }
 	})
@@ -542,10 +591,10 @@ export function NON_NEGATIVE(): ValidatorFunction<number> {
 export function NON_POSITIVE(): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value > 0) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.NegativeOrZero,
-			}
+				errorArgs: {},
+			})
 		}
 		return { validationPass: true }
 	})
@@ -555,11 +604,10 @@ export function NON_POSITIVE(): ValidatorFunction<number> {
 export function MIN_VALUE(minVal: number): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value < minVal) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.Min,
 				errorArgs: { minValue: minVal },
-			}
+			})
 		}
 		return { validationPass: true }
 	})
@@ -569,11 +617,10 @@ export function MIN_VALUE(minVal: number): ValidatorFunction<number> {
 export function MAX_VALUE(maxVal: number): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value > maxVal) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.Max,
 				errorArgs: { maxValue: maxVal },
-			}
+			})
 		}
 		return { validationPass: true }
 	})
@@ -586,11 +633,10 @@ export function MIN_MAX_VALUE(
 ): ValidatorFunction<number> {
 	return EXPECT_TYPE<number>("number", (value) => {
 		if (value < minVal || value > maxVal) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MinMax,
 				errorArgs: { minValue: minVal, maxValue: maxVal },
-			}
+			})
 		}
 		return { validationPass: true }
 	})
@@ -602,10 +648,10 @@ export function NON_EMPTY_ARR<T>(): ValidatorFunction<T[]> {
 		if (Array.isArray(val) && val.length > 0) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.EmptyArr,
-			}
+				errorArgs: {},
+			})
 		}
 	}
 }
@@ -616,13 +662,12 @@ export function ARR_LEN_MIN<T>(minLen: number): ValidatorFunction<T[]> {
 		if (Array.isArray(val) && val.length >= minLen) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MinArrLength,
 				errorArgs: {
 					minLength: minLen,
 				},
-			}
+			})
 		}
 	}
 }
@@ -633,13 +678,12 @@ export function ARR_LEN_MAX<T>(maxLen: number): ValidatorFunction<T[]> {
 		if (Array.isArray(val) && val.length <= maxLen) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MaxArrLength,
 				errorArgs: {
 					maxLength: maxLen,
 				},
-			}
+			})
 		}
 	}
 }
@@ -656,14 +700,13 @@ export function ARR_LEN_MIN_MAX<T>(
 		) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.MinMaxArrLength,
 				errorArgs: {
 					minLength: minLen,
 					maxLength: maxLen,
 				},
-			}
+			})
 		}
 	}
 }
@@ -673,13 +716,12 @@ export function IN_ARRAY<T>(allowedValues: T[]): ValidatorFunction<T> {
 		if (allowedValues.includes(val)) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.NotInAllowedSet,
 				errorArgs: {
-					allowedValues,
+					allowedValues: allowedValues,
 				},
-			}
+			})
 		}
 	}
 }
@@ -689,13 +731,12 @@ export function NOT_IN_ARRAY<T>(disallowedValues: T[]): ValidatorFunction<T> {
 		if (!disallowedValues.includes(val)) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.InDisallowedSet,
 				errorArgs: {
-					disallowedValues,
+					disallowedValues: disallowedValues,
 				},
-			}
+			})
 		}
 	}
 }
@@ -707,13 +748,12 @@ export function IN_ENUM<T extends {} = {}>(
 		if (Object.values(selectedEnum).includes(val)) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.NotInAllowedSet,
 				errorArgs: {
-					allowedValues: Object.values(selectedEnum),
+					allowedValues: Object.keys(selectedEnum),
 				},
-			}
+			})
 		}
 	}
 }
@@ -725,13 +765,12 @@ export function NOT_IN_ENUM<T extends {} = {}>(
 		if (!Object.values(selectedEnum).includes(val)) {
 			return { validationPass: true }
 		} else {
-			return {
-				validationPass: false,
-				errorCode: ErrorCodes.NotInAllowedSet,
+			return invalidParam({
+				errorCode: ErrorCodes.InDisallowedSet,
 				errorArgs: {
-					allowedValues: Object.values(selectedEnum),
+					disallowedValues: Object.values(selectedEnum),
 				},
-			}
+			})
 		}
 	}
 }
@@ -739,10 +778,10 @@ export function NOT_IN_ENUM<T extends {} = {}>(
 export const DATE = EXPECT_TYPE<Date>("date", (value) => {
 	const dateVal = new Date(value)
 	if (dateVal.toString() === "Invalid Date") {
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidDate,
-		}
+			errorArgs: {},
+		})
 	}
 	return {
 		validationPass: true,
@@ -750,11 +789,18 @@ export const DATE = EXPECT_TYPE<Date>("date", (value) => {
 })
 
 export const DATE_FUTURE = EXPECT_TYPE<Date>("date", (value) => {
-	if (new Date(value).getTime() < Date.now()) {
-		return {
-			validationPass: false,
+	const dateVal = new Date(value)
+	if (dateVal.toString() === "Invalid Date") {
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidDate,
-		}
+			errorArgs: {},
+		})
+	}
+	if (dateVal.getTime() <= Date.now()) {
+		return invalidParam({
+			errorCode: ErrorCodes.InvalidDate,
+			errorArgs: {},
+		})
 	}
 	return { validationPass: true }
 })
@@ -762,16 +808,16 @@ export const DATE_FUTURE = EXPECT_TYPE<Date>("date", (value) => {
 export const DATE_PAST = EXPECT_TYPE<Date>("date", (value) => {
 	const dateVal = new Date(value)
 	if (dateVal.toString() === "Invalid Date") {
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidDate,
-		}
+			errorArgs: {},
+		})
 	}
-	if (dateVal.getTime() > Date.now()) {
-		return {
-			validationPass: false,
+	if (dateVal.getTime() >= Date.now()) {
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidDate,
-		}
+			errorArgs: {},
+		})
 	}
 	return { validationPass: true }
 })

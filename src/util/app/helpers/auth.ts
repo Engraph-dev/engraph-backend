@@ -2,7 +2,7 @@ import { EventType, type User } from "@prisma/client"
 import { createHash } from "node:crypto"
 
 import { logEvent } from "@/util/app/events"
-import { sendMail } from "@/util/app/mail"
+import { sendMail } from "@/util/app/helpers/mail"
 import {
 	BRAND_NAME,
 	VERIFICATION_TOKEN_EXPIRATION_HOURS,

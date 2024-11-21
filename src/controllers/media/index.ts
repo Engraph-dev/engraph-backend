@@ -2,7 +2,8 @@ import { HeadObjectCommand } from "@aws-sdk/client-s3"
 import { EventType, S3RequestMethod, S3RequestStatus } from "@prisma/client"
 
 import { getEventData, logEvent } from "@/util/app/events"
-import { getObjectUrl, s3Client } from "@/util/app/s3"
+import type { ErrorArgMapping } from "@/util/app/helpers/error-codes"
+import { getObjectUrl, s3Client } from "@/util/app/helpers/s3"
 import { AWS_S3_BUCKET, S3_REQUEST_VALIDITY_SECONDS } from "@/util/config/s3"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -148,8 +149,10 @@ export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 				invalidParams: [
 					{
 						paramType: "URL",
-						errorCode: ErrorCodes.RequestIdInvalid,
 						paramName: "requestId",
+						errorCode: ErrorCodes.RequestIdInvalid,
+						errorArgs:
+							{} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.RequestIdInvalid],
 					},
 				],
 			})
@@ -159,8 +162,10 @@ export const mediaCallbackHandler = requestHandler<MediaCallbackParams>(
 				invalidParams: [
 					{
 						paramType: "URL",
-						errorCode: ErrorCodes.RequestIdInvalid,
 						paramName: "requestId",
+						errorCode: ErrorCodes.RequestIdInvalid,
+						errorArgs:
+							{} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.RequestIdInvalid],
 					},
 				],
 			})

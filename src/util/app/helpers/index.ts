@@ -1,16 +1,17 @@
 import cuid2 from "@paralleldrive/cuid2"
 
+import { IdentSuffixType } from "@/util/app/helpers/data-handlers"
 import { DEFAULT_PAGINATION_SIZE } from "@/util/config/http"
 import { PagedQuery } from "@/util/defs/engraph-backend/common"
 
 // Prisma uses cuids of length 25
 export const createCuid = cuid2.init({
-	length: 25,
+	length: IdentSuffixType.Cuid,
 })
 
 // Generates CUIDs of length 8
 export const createMiniCuid = cuid2.init({
-	length: 8,
+	length: IdentSuffixType.MiniCuid,
 })
 
 export function getQueryOffset(query: PagedQuery) {

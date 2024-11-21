@@ -1,7 +1,7 @@
 import { EventType } from "@prisma/client"
 
 import { getEventData, logEvent } from "@/util/app/events"
-import { cookieOptions } from "@/util/app/http"
+import { cookieOptions } from "@/util/app/helpers/http"
 import { AUTH_COOKIE_NAME } from "@/util/config/auth"
 import db from "@/util/db"
 import { StatusCodes } from "@/util/defs/engraph-backend/common"

@@ -1,6 +1,6 @@
 import { createHash } from "crypto"
 
-import { createCuid } from "@/util/app"
+import { createCuid } from "@/util/app/helpers"
 import { XSRF_TIMEOUT_SECONDS } from "@/util/config/http"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"

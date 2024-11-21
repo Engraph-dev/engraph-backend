@@ -1,6 +1,6 @@
 import db from "@/util/db"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
-import type { ValidatorFunction } from "@/util/http/middleware"
+import { type ValidatorFunction, invalidParam } from "@/util/http/middleware"
 import { EXPECT_TYPE } from "@/util/http/validators"
 
 type UnusedEmailArgs = {
@@ -21,10 +21,10 @@ export function UnusedEmail(
 		})
 
 		if (userWithMail) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.IdentityInUse,
-			}
+				errorArgs: {},
+			})
 		}
 
 		return {

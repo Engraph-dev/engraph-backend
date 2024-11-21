@@ -8,11 +8,12 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { S3RequestMethod, S3RequestStatus } from "@prisma/client"
 
 import {
-	AWS_CLOUDFRONT_BASE_URL,
 	AWS_S3_BUCKET,
 	AWS_S3_KEY_ID,
 	AWS_S3_KEY_SECRET,
 	AWS_S3_REGION,
+	S3_ORIGIN,
+	S3_ORIGIN_PROTOCOL,
 	S3_REQUEST_VALIDITY_SECONDS,
 } from "@/util/config/s3"
 import db from "@/util/db"
@@ -55,8 +56,8 @@ export async function getObjectUrl({
 	if (requestMethod === "GET") {
 		// Strip authentication for GET requests
 		const objectUrl = new URL(presignedUrl)
-		const { origin: s3Origin, pathname: s3Pathname } = objectUrl
-		const resolvedUrl = `${AWS_CLOUDFRONT_BASE_URL}${s3Pathname}`
+		const { pathname: s3Pathname } = objectUrl
+		const resolvedUrl = `${S3_ORIGIN_PROTOCOL}://${S3_ORIGIN}${s3Pathname}`
 		return resolvedUrl
 	}
 

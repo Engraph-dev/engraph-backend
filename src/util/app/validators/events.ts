@@ -1,7 +1,7 @@
 import { type MetadataObject, validateMetadata } from "@/util/app/events"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import type { RecordEventBody } from "@/util/defs/engraph-backend/events"
-import type { BatchValidator } from "@/util/http/middleware"
+import { type BatchValidator, invalidParam } from "@/util/http/middleware"
 
 export const EventValidator: BatchValidator<RecordEventBody> = {
 	targetParams: ["eventType", "eventMetadata"],
@@ -12,10 +12,10 @@ export const EventValidator: BatchValidator<RecordEventBody> = {
 				validationPass: true,
 			}
 		} catch (e) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.Unknown,
-			}
+				errorArgs: {},
+			})
 		}
 	},
 }

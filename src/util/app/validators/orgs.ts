@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client"
 
 import db from "@/util/db"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
+import { invalidParam } from "@/util/http/middleware"
 import { EXPECT_TYPE } from "@/util/http/validators"
 
 type OrgCheckArgs = {
@@ -21,10 +22,10 @@ export const OrgIdValidator = EXPECT_TYPE<string>("string", async (orgId) => {
 		}
 	}
 
-	return {
-		validationPass: false,
+	return invalidParam({
 		errorCode: ErrorCodes.InvalidOrgId,
-	}
+		errorArgs: {},
+	})
 })
 
 export function OrgIdAccessCheck(args?: OrgCheckArgs) {
@@ -50,9 +51,9 @@ export function OrgIdAccessCheck(args?: OrgCheckArgs) {
 			}
 		}
 
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidOrgId,
-		}
+			errorArgs: {},
+		})
 	})
 }

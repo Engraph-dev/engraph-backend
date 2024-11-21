@@ -1,4 +1,3 @@
-import { requestHandler } from "@/util/http/wrappers"
 import { indexRouter } from "@/routers"
 import bodyParser from "body-parser"
 import cookieParser from "cookie-parser"
@@ -6,8 +5,8 @@ import dotenv from "dotenv"
 import express from "express"
 import cron from "node-cron"
 
-import { cleanupXSRFTokens } from "@/util/app/http"
-import { cleanupS3Requests } from "@/util/app/s3"
+import { cleanupXSRFTokens } from "@/util/app/helpers/http"
+import { cleanupS3Requests } from "@/util/app/helpers/s3"
 import { API_VERSION, PORT, XSRF_TIMEOUT_SECONDS } from "@/util/config/http"
 import { S3_REQUEST_VALIDITY_SECONDS } from "@/util/config/s3"
 import { StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -19,6 +18,7 @@ import {
 	getRateLimiter,
 	xsrfParser,
 } from "@/util/http/middleware"
+import { requestHandler } from "@/util/http/wrappers"
 import { LogLevel, log } from "@/util/log"
 
 dotenv.config()

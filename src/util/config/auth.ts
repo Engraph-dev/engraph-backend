@@ -1,4 +1,4 @@
-import { featureFlag } from "."
+import { featureFlag } from "@/util/config"
 import type { CorsOptions } from "cors"
 
 import { USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "@/util/config/http"

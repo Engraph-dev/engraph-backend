@@ -1,4 +1,3 @@
-import type { IRequest, SessionJwtContent } from "."
 import { verify } from "jsonwebtoken"
 
 import {
@@ -7,6 +6,7 @@ import {
 	AUTH_HEADER_NAME,
 	JWT_SECRET,
 } from "@/util/config/auth"
+import type { IRequest, SessionJwtContent } from "@/util/http"
 
 export type ParsedJwtData =
 	| {

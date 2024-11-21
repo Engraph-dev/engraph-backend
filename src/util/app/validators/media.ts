@@ -12,7 +12,7 @@ import {
 	MediaEndpointRequestBody,
 	type MediaEndpointRequestQuery,
 } from "@/util/defs/engraph-backend/media"
-import { BatchValidatorFunction } from "@/util/http/middleware"
+import { BatchValidatorFunction, invalidParam } from "@/util/http/middleware"
 import { EXPECT_TYPE } from "@/util/http/validators"
 
 export const S3ObjectKeyMethodValidator: BatchValidatorFunction<
@@ -43,16 +43,16 @@ export const S3ObjectKeyMethodValidator: BatchValidatorFunction<
 				validationPass: true,
 			}
 		}
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidObjectKey,
-		}
+			errorArgs: {},
+		})
 	} else {
 		if (objectExists && !Boolean(req.query.replaceObject)) {
-			return {
-				validationPass: false,
+			return invalidParam({
 				errorCode: ErrorCodes.ObjectExists,
-			}
+				errorArgs: {},
+			})
 		}
 		return {
 			validationPass: true,
@@ -83,14 +83,13 @@ export const S3ObjectContentSizeValidator: BatchValidatorFunction<
 		}
 	}
 
-	return {
-		validationPass: false,
+	return invalidParam({
 		errorCode: ErrorCodes.ObjectParamsInvalid,
 		errorArgs: {
 			maxSize: S3_OBJECT_UPLOAD_MAX_SIZE_BYTES,
-			acceptedMimeTypes: ACCEPT_S3_CONTENT_TYPES,
+			acceptedTypes: ACCEPT_S3_CONTENT_TYPES,
 		},
-	}
+	})
 }
 export const MediaRequestIdValidator = EXPECT_TYPE<string>(
 	"string",
@@ -110,9 +109,9 @@ export const MediaRequestIdValidator = EXPECT_TYPE<string>(
 				validationPass: true,
 			}
 		}
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.RequestIdInvalid,
-		}
+			errorArgs: {},
+		})
 	},
 )

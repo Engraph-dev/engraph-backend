@@ -1,5 +1,6 @@
 import db from "@/util/db"
 import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
+import { invalidParam } from "@/util/http/middleware"
 import { EXPECT_TYPE } from "@/util/http/validators"
 
 type SessionEntityValidatorArgs = {
@@ -20,9 +21,9 @@ export const SessionEntityValidator = (args: SessionEntityValidatorArgs) => {
 				validationPass: true,
 			}
 		}
-		return {
-			validationPass: false,
+		return invalidParam({
 			errorCode: ErrorCodes.InvalidSessionId,
-		}
+			errorArgs: {},
+		})
 	})
 }

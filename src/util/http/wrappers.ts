@@ -1,7 +1,8 @@
-import type { IRequest, IResponse } from "."
-import { StatusCodes } from "../defs/engraph-backend/common"
-import { LogLevel, log } from "../log"
 import type { NextFunction } from "express"
+
+import { StatusCodes } from "@/util/defs/engraph-backend/common"
+import type { IRequest, IResponse } from "@/util/http"
+import { LogLevel, log } from "@/util/log"
 
 // This is a helper function that wraps around the core handler function
 // Simply manages the internal errors for you through try catch, so you don't have to

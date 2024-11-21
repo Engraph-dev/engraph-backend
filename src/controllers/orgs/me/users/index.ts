@@ -1,10 +1,10 @@
 import { EventType } from "@prisma/client"
 import { hashSync } from "bcryptjs"
 
-import { getQueryOffset } from "@/util/app"
-import { createAndSendVerificationToken } from "@/util/app/auth"
 import { getEventData, logEvent } from "@/util/app/events"
-import { getMiniUser } from "@/util/app/users"
+import { getQueryOffset } from "@/util/app/helpers"
+import { createAndSendVerificationToken } from "@/util/app/helpers/auth"
+import { getMiniUser } from "@/util/app/helpers/users"
 import { BCRYPT_SALT_ROUNDS, VERIFY_EMAIL } from "@/util/config/auth"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"

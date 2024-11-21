@@ -8,7 +8,7 @@ import type { DangerZoneBody } from "@/util/defs/engraph-backend/orgs/me/auth"
 import { validateParams } from "@/util/http/middleware"
 import { STRLEN_MIN } from "@/util/http/validators"
 
-const myOrgAuthRouter = Router()
+const myOrgAuthRouter = Router({ mergeParams: true })
 
 myOrgAuthRouter.post<
 	"/danger-zone",
