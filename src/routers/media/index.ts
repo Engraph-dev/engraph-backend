@@ -70,7 +70,7 @@ mediaRouter.use<
 	NoParams
 >(
 	"/:requestId",
-	requireMethods([S3RequestMethod.PUT, S3RequestMethod.DELETE]),
+	requireMethods(Object.values(S3RequestMethod)),
 	validateParams({
 		urlParams: {
 			requestId: MediaRequestIdValidator,
