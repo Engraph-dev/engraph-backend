@@ -135,4 +135,4 @@ serviceAccountKey.json
 .idea
 
 dist/*
-~dist
+!dist/ignore.txt
