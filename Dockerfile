@@ -22,8 +22,5 @@ COPY src /services/engraph-backend/src
 RUN ["npm", "run", "build"]
 
 COPY dist/ /services/engraph-backend/dist/
-COPY .env /services/engraph-backend/
-
-EXPOSE ${PORT}
 
 CMD ["npm", "start"]
