@@ -56,7 +56,7 @@ export async function createAndSendVerificationToken(
 	tokenParams.set("token", identHash)
 	tokenParams.set("orgId", args.orgId)
 
-	const resolvedUrl = `${WEB_PROTO}://${args.orgId}.${WEB_ORIGIN}${WEB_ENDPOINTS.VERIFY_TOKEN}?${tokenParams.toString()}`
+	const resolvedUrl = `${WEB_PROTO}://${WEB_ORIGIN}${WEB_ENDPOINTS.VERIFY_TOKEN}?${tokenParams.toString()}`
 
 	if (args.mailAddress) {
 		const mailResponse = await sendMail({
