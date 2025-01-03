@@ -6,7 +6,7 @@ WORKDIR /services/engraph-backend
 # Copy package files for next step
 COPY tsconfig.json /services/engraph-backend/
 
-COPY package.json /services/engraph-backend/
+COPY package.json package-lock.json /services/engraph-backend/
 
 # Need schema.prisma file for postinstall client generation
 COPY prisma /services/engraph-backend/prisma
