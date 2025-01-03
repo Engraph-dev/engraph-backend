@@ -1,3 +1,4 @@
+import type { BRAND_NAME } from "../config/auth"
 import type { Org, Session, User } from "@prisma/client"
 import type { Request, Response } from "express"
 
@@ -7,7 +8,12 @@ import {
 	StatusCode,
 } from "@/util/defs/engraph-backend/common"
 
-export type SessionJwtContent = Pick<Session, "sessionId">
+export type SessionJwtContent = {
+	sub: Session["sessionId"]
+	iat: number
+	exp: number
+	iss: typeof BRAND_NAME
+}
 
 export type ReqUserSession = Session & {
 	sessionUser: User

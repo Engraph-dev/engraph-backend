@@ -13,10 +13,12 @@ COPY prisma /services/engraph-backend/prisma
 
 # Todo: Run ci instead of install
 # ci requires package files to exist previously
-RUN ["npm", "install"]
+RUN ["npm", "ci"]
 
 # Copy source files
 COPY src /services/engraph-backend/src
+
+ENV NODE_ENV=production
 
 # Build the server files, output will be stored in dist
 RUN ["npm", "run", "build"]

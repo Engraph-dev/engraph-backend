@@ -5,9 +5,11 @@ import { sign } from "jsonwebtoken"
 import { getEventData, logEvent } from "@/util/app/events"
 import { createCuid } from "@/util/app/helpers"
 import { createAndSendVerificationToken } from "@/util/app/helpers/auth"
+import type { ErrorArgMapping } from "@/util/app/helpers/error-codes"
 import { cookieOptions } from "@/util/app/helpers/http"
 import {
 	AUTH_COOKIE_NAME,
+	BRAND_NAME,
 	JWT_SECRET,
 	SESSION_VALIDITY_SECONDS,
 } from "@/util/config/auth"
@@ -25,7 +27,6 @@ import type {
 } from "@/util/defs/engraph-backend/orgs/me/auth"
 import type { SessionJwtContent } from "@/util/http"
 import { requestHandler } from "@/util/http/wrappers"
-import type { ErrorArgMapping } from "@/util/app/helpers/error-codes"
 
 /**
  * This is the handler for the login endpoint.
@@ -73,7 +74,8 @@ export const loginCredentials = requestHandler<
 					paramType: "BODY",
 					paramName: "userMail",
 					errorCode: ErrorCodes.IdentityNotFound,
-					errorArgs: {} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.IdentityNotFound],
+					errorArgs:
+						{} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.IdentityNotFound],
 				},
 			],
 		})
@@ -89,7 +91,8 @@ export const loginCredentials = requestHandler<
 					paramType: "BODY",
 					paramName: "userPassword",
 					errorCode: ErrorCodes.PasswordMismatch,
-					errorArgs: {} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.PasswordMismatch],
+					errorArgs:
+						{} satisfies (typeof ErrorArgMapping)[typeof ErrorCodes.PasswordMismatch],
 				},
 			],
 		})
@@ -97,15 +100,19 @@ export const loginCredentials = requestHandler<
 
 	const sessionId = createCuid()
 
+	const nowTs = new Date()
+	const endTs = new Date(nowTs.getTime() + SESSION_VALIDITY_SECONDS * 1000)
+
 	const sessionToken = sign(
 		{
-			sessionId: sessionId,
+			iss: BRAND_NAME,
+			// iat exp should be in seconds, not milliseconds as reported by Date.getTime()
+			iat: Math.floor(nowTs.getTime() / 1000),
+			exp: Math.floor(endTs.getTime() / 1000),
+			sub: sessionId,
 		} satisfies SessionJwtContent,
 		JWT_SECRET,
 	)
-
-	const nowTs = new Date()
-	const endTs = new Date(nowTs.getTime() + SESSION_VALIDITY_SECONDS * 1000)
 
 	const newSession = await db.session.create({
 		data: {

@@ -639,7 +639,7 @@ export const authParser = middlewareHandler(async (req, res, next) => {
 	if (jwtData) {
 		const dbSession = await db.session.findFirst({
 			where: {
-				sessionId: jwtData.sessionId,
+				sessionId: jwtData.sub,
 				sessionToken: jwtString,
 			},
 			include: {
@@ -650,13 +650,13 @@ export const authParser = middlewareHandler(async (req, res, next) => {
 		if (!dbSession) {
 			if (!ALLOW_NON_DB_SESSION_ID) {
 				throw new Error(
-					`Session ${jwtData.sessionId} not found in the database!`,
+					`Session ${jwtData.sub} not found in the database!`,
 				)
 			} else {
 				log(
 					"auth",
 					LogLevel.Warn,
-					`Session ${jwtData.sessionId} not found in the database!`,
+					`Session ${jwtData.sub} not found in the database!`,
 				)
 			}
 		}

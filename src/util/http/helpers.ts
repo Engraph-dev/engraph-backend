@@ -34,7 +34,7 @@ export function parseJwtFromRequest(req: IRequest): ParsedJwtData {
 	if (authString && typeof authString === "string" && authString.length > 0) {
 		const parsedData = verify(authString, JWT_SECRET) as SessionJwtContent
 
-		if (!parsedData || typeof parsedData.sessionId !== "string") {
+		if (!parsedData || typeof parsedData.sub !== "string") {
 			if (!ALLOW_MALFORMED_JWT) {
 				throw new Error(
 					"Session ID was not found in the jwt! The environment secrets may have been leaked!",
