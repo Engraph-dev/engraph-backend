@@ -7,11 +7,9 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { S3RequestMethod, S3RequestStatus } from "@prisma/client"
 
+import { AWS_KEY_ID, AWS_KEY_SECRET, AWS_REGION } from "@/util/config/aws"
 import {
 	AWS_S3_BUCKET,
-	AWS_S3_KEY_ID,
-	AWS_S3_KEY_SECRET,
-	AWS_S3_REGION,
 	S3_ORIGIN,
 	S3_ORIGIN_PROTOCOL,
 	S3_REQUEST_VALIDITY_SECONDS,
@@ -19,10 +17,10 @@ import {
 import db from "@/util/db"
 
 export const s3Client = new S3Client({
-	region: AWS_S3_REGION,
+	region: AWS_REGION,
 	credentials: {
-		accessKeyId: AWS_S3_KEY_ID,
-		secretAccessKey: AWS_S3_KEY_SECRET,
+		accessKeyId: AWS_KEY_ID,
+		secretAccessKey: AWS_KEY_SECRET,
 	},
 })
 

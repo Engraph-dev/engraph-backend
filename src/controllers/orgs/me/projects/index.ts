@@ -32,6 +32,7 @@ export const getProjects = requestHandler<NoParams, NoParams, GetProjectsQuery>(
 								accessLevel: {
 									in: accessLevel,
 								},
+								userId: req.currentSession!.userId,
 							},
 						},
 					},
@@ -68,7 +69,8 @@ export const createProject = requestHandler<
 	CreateProjectBody,
 	NoParams
 >(async (req, res) => {
-	const { projectName, projectSourceType, projectSourceUrl } = req.body
+	const { projectName, projectSourceType, projectIdentifier, projectType } =
+		req.body
 
 	const projectData = await db.project.create({
 		data: {
@@ -79,7 +81,8 @@ export const createProject = requestHandler<
 			projectName: projectName,
 			projectOrgId: req.currentSession!.orgId,
 			projectSourceType: projectSourceType,
-			projectSourceUrl: projectSourceUrl,
+			projectIdentifier: projectIdentifier,
+			projectType: projectType,
 		},
 	})
 
@@ -88,6 +91,14 @@ export const createProject = requestHandler<
 		eventType: EventType.ProjectCreate,
 		eventMetadata: {
 			projectId: projectData.projectId,
+		},
+	})
+
+	await db.projectUserAccess.create({
+		data: {
+			projectId: projectData.projectId,
+			userId: req.currentSession!.userId,
+			accessLevel: AccessLevel.Admin,
 		},
 	})
 
