@@ -10,6 +10,9 @@ import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { requestHandler } from "@/util/http/wrappers"
 import { LogLevel, log } from "@/util/log"
 
+/**
+ * This *must* be mounted at a path ending in /webhooks
+ */
 export const githubEventsHandler = requestHandler<NoParams, any, NoParams>(
 	async (req, res) => {
 		const eventType = req.headers["x-github-event"]
