@@ -1,20 +1,15 @@
-import { AccessLevel, EventType } from "@prisma/client"
+import { AccessLevel, EventType } from "@prisma/client";
 
-import { getEventData, logEvent } from "@/util/app/events"
-import { getQueryOffset } from "@/util/app/helpers"
-import {
-	IdentSuffixType,
-	generateIdentifierFromString,
-} from "@/util/app/helpers/data-handlers"
-import db from "@/util/db"
-import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
-import {
-	type CreateProjectBody,
-	type GetProjectsQuery,
-	GetProjectsResponse,
-	ProjectResponse,
-} from "@/util/defs/engraph-backend/orgs/me/projects"
-import { requestHandler } from "@/util/http/wrappers"
+
+
+import { getEventData, logEvent } from "@/util/app/events";
+import { getQueryOffset } from "@/util/app/helpers";
+import { IdentSuffixType, generateIdentifierFromString } from "@/util/app/helpers/data-handlers";
+import db from "@/util/db";
+import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common";
+import { type CreateProjectBody, type GetProjectsQuery, GetProjectsResponse, ProjectResponse } from "@/util/defs/engraph-backend/orgs/me/projects";
+import { requestHandler } from "@/util/http/wrappers";
+
 
 export const getProjects = requestHandler<NoParams, NoParams, GetProjectsQuery>(
 	async (req, res) => {
@@ -69,8 +64,9 @@ export const createProject = requestHandler<
 	CreateProjectBody,
 	NoParams
 >(async (req, res) => {
-	const { projectName, projectSourceType, projectIdentifier, projectType } =
+	const { projectName, projectSourceType, projectIdentifier, projectType, projectBranch } =
 		req.body
+
 
 	const projectData = await db.project.create({
 		data: {
@@ -83,6 +79,7 @@ export const createProject = requestHandler<
 			projectSourceType: projectSourceType,
 			projectIdentifier: projectIdentifier,
 			projectType: projectType,
+			projectBranch: projectBranch,
 		},
 	})
 

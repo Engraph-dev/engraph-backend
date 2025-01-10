@@ -18,6 +18,7 @@ export const updateProject = requestHandler<
 >(async (req, res) => {
 	const { projectId } = req.params
 	const { projectName, projectType } = req.body
+
 	const projectData = await db.project.update({
 		where: {
 			projectId: projectId,

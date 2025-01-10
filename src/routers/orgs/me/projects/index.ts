@@ -45,6 +45,7 @@ myOrgProjectsRouter.post<
 			projectName: ALL_OF([STR_NOT_EMPTY(), OrgProjectLimit]),
 			projectSourceType: IN_ENUM(ProjectSourceType),
 			projectIdentifier: STR_NOT_EMPTY(),
+			projectBranch: STR_NOT_EMPTY(),
 			projectType: IN_ENUM(ProjectType),
 		},
 	}),
