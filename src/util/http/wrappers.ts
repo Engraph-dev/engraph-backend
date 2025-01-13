@@ -33,6 +33,7 @@ export function requestHandler<
 				}ms`,
 			)
 		} catch (err) {
+			console.error(err)
 			log("handler", LogLevel.Error, err)
 			res.status(StatusCodes.INTERNAL_ERROR).json({
 				responseStatus: "ERR_INTERNAL_ERROR",

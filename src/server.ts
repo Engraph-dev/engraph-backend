@@ -73,3 +73,5 @@ app.use(
 app.listen(PORT, () => {
 	log("http", LogLevel.Info, `Server running on port: ${PORT}`)
 })
+
+// createGraphDB(ROOT_DB_CREDENTIALS)
