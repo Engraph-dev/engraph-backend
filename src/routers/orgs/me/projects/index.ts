@@ -47,6 +47,7 @@ myOrgProjectsRouter.post<
 			projectIdentifier: STR_NOT_EMPTY(),
 			projectBranch: STR_NOT_EMPTY(),
 			projectType: IN_ENUM(ProjectType),
+			projectEntryPoint: STR_NOT_EMPTY(),
 		},
 	}),
 	createProject,

@@ -31,6 +31,7 @@ myOrgProjectIdRouter.patch<
 		bodyParams: {
 			projectName: NULLISH(ALL_OF([STR_NOT_EMPTY(), OrgProjectLimit])),
 			projectType: NULLISH(IN_ENUM(ProjectType)),
+			projectEntryPoint: NULLISH(STR_NOT_EMPTY()),
 		},
 	}),
 	updateProject,
