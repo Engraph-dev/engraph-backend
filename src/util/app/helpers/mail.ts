@@ -10,7 +10,7 @@ type HTMLTemplateArgs = {
 }
 
 function htmlTemplate(args: HTMLTemplateArgs) {
-	const { mailTitle = "Engraph.dev", mailBody } = args
+	const { mailTitle = "engraph.dev", mailBody } = args
 	const nowYear = new Date().getFullYear()
 
 	return `
@@ -53,7 +53,7 @@ function htmlTemplate(args: HTMLTemplateArgs) {
 					color: #333333;
 				}
 				.content h2 {
-					color: #6a0dad;
+					color: #4c00ff;
 				}
 				.footer {
 					background-color: #eeeeee;
@@ -64,7 +64,7 @@ function htmlTemplate(args: HTMLTemplateArgs) {
 					border-bottom-right-radius: 5px;
 				}
 				.footer a {
-					color: #6a0dad;
+					color: #4c00ff;
 					text-decoration: none;
 				}
 			</style>
@@ -78,7 +78,7 @@ function htmlTemplate(args: HTMLTemplateArgs) {
 					${mailBody}
 				</div>
 				<div class="footer">
-					<p>&copy;${nowYear} Engraph. All rights reserved.</p>
+					<p>&copy;${nowYear} engraph.dev . All rights reserved.</p>
 				</div>
 			</div>
 		</body>

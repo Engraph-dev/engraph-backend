@@ -1,6 +1,6 @@
-import { featureFlag } from "@/util/config"
 import type { CorsOptions } from "cors"
 
+import { featureFlag } from "@/util/config"
 import { USE_XSRF_PROTECTION, XSRF_HEADER_NAME } from "@/util/config/http"
 import { envVar } from "@/util/env"
 
@@ -16,20 +16,26 @@ export const RESEND_SENDER_ADDRESS = envVar("RESEND_SENDER_ADDRESS")
 
 export const VERIFICATION_TOKEN_EXPIRATION_HOURS = 1
 
-export const WEB_ORIGIN = envVar("WEB_ORIGIN")
-export const WEB_PROTO = envVar("WEB_PROTO")
+export const WEB_ORIGINS = envVar("WEB_ORIGIN").split(",")
+export const WEB_PROTOS = envVar("WEB_PROTO").split(",")
 
 export const WEB_ENDPOINTS = {
 	VERIFY_TOKEN: "/auth/verify-token",
 } as const
 
-export const BRAND_NAME = "Engraph.dev"
+export const BRAND_NAME = "engraph.dev"
 export const JWT_EXPIRATION_HOURS = 24
 export const PASSWORD_LENGTH = 10
 
-export const DEV_ORIGINS = [`${WEB_PROTO}://${WEB_ORIGIN}`]
+export const DEV_ORIGINS = WEB_ORIGINS.map((webOrigin, originIdx) => {
+	const webProto = WEB_PROTOS[originIdx]
+	return `${webProto}://${webOrigin}`
+})
 
-export const PROD_ORIGINS = [`${WEB_PROTO}://${WEB_ORIGIN}`]
+export const PROD_ORIGINS = WEB_ORIGINS.map((webOrigin, originIdx) => {
+	const webProto = WEB_PROTOS[originIdx]
+	return `${webProto}://${webOrigin}`
+})
 
 export const CORS_CONFIG: CorsOptions = {
 	credentials: true,

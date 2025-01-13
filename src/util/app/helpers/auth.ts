@@ -8,8 +8,8 @@ import {
 	VERIFICATION_TOKEN_EXPIRATION_HOURS,
 	VERIFY_EMAIL,
 	WEB_ENDPOINTS,
-	WEB_ORIGIN,
-	WEB_PROTO,
+	WEB_ORIGINS,
+	WEB_PROTOS,
 } from "@/util/config/auth"
 import db from "@/util/db"
 
@@ -56,7 +56,7 @@ export async function createAndSendVerificationToken(
 	tokenParams.set("token", identHash)
 	tokenParams.set("orgId", args.orgId)
 
-	const resolvedUrl = `${WEB_PROTO}://${WEB_ORIGIN}${WEB_ENDPOINTS.VERIFY_TOKEN}?${tokenParams.toString()}`
+	const resolvedUrl = `${WEB_PROTOS}://${WEB_ORIGINS}${WEB_ENDPOINTS.VERIFY_TOKEN}?${tokenParams.toString()}`
 
 	if (args.mailAddress) {
 		const mailResponse = await sendMail({

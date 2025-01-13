@@ -1,4 +1,4 @@
-import type { OrgPlan } from "@prisma/client"
+import { OrgPlan } from "@prisma/client"
 
 export const ProjectLimitMap: Record<OrgPlan, number> = {
 	None: 0,

@@ -1,7 +1,7 @@
-import type { BRAND_NAME } from "../config/auth"
 import type { Org, Session, User } from "@prisma/client"
 import type { Request, Response } from "express"
 
+import type { BRAND_NAME } from "@/util/config/auth"
 import {
 	ReqMethod,
 	ResJSON,

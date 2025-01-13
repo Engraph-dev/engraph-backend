@@ -24,9 +24,10 @@
 	"homepage": "https://github.com/Engraph-dev/engraph-backend#readme",
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.675.0",
+		"@aws-sdk/client-sqs": "^3.723.0",
 		"@aws-sdk/s3-request-presigner": "^3.675.0",
 		"@paralleldrive/cuid2": "^2.2.2",
-		"@prisma/client": "^5.21.1",
+		"@prisma/client": "^6.2.0",
 		"bcryptjs": "^2.4.3",
 		"body-parser": "^1.20.3",
 		"cookie-parser": "^1.4.7",
@@ -35,9 +36,10 @@
 		"express": "^4.21.1",
 		"express-rate-limit": "^7.4.1",
 		"jsonwebtoken": "^9.0.2",
+		"neo4j-driver": "^5.27.0",
 		"node-cron": "^3.0.3",
 		"octokit": "^4.0.3",
-		"prisma": "^5.21.1",
+		"prisma": "^6.2.0",
 		"resend": "^4.0.0",
 		"resolve-tspaths": "^0.8.22",
 		"validator": "^13.12.0"

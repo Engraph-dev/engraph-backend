@@ -1,4 +1,4 @@
-import { ProjectSourceType } from "@prisma/client"
+import { ProjectType } from "@prisma/client"
 import { Router } from "express"
 
 import {
@@ -6,10 +6,7 @@ import {
 	updateProject,
 } from "@/controllers/orgs/me/projects/[projectId]"
 
-import {
-	OrgProjectLimit,
-	ProjectSourceValidator,
-} from "@/util/app/validators/projects"
+import { OrgProjectLimit } from "@/util/app/validators/projects"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
 	DeleteProjectParams,
@@ -17,14 +14,7 @@ import type {
 	UpdateProjectParams,
 } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]"
 import { validateParams } from "@/util/http/middleware"
-import {
-	ALL_OF,
-	IN_ENUM,
-	IS_URL,
-	NULLISH,
-	NULLISH_BATCH,
-	STR_NOT_EMPTY,
-} from "@/util/http/validators"
+import { ALL_OF, IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
 
 const myOrgProjectIdRouter = Router({ mergeParams: true })
 
@@ -40,11 +30,8 @@ myOrgProjectIdRouter.patch<
 	validateParams<UpdateProjectParams, UpdateProjectBody, NoParams>({
 		bodyParams: {
 			projectName: NULLISH(ALL_OF([STR_NOT_EMPTY(), OrgProjectLimit])),
-			projectSourceType: NULLISH(IN_ENUM(ProjectSourceType)),
-			projectSourceUrl: NULLISH(IS_URL()),
-		},
-		batchValidators: {
-			bodyParams: [NULLISH_BATCH(ProjectSourceValidator)],
+			projectType: NULLISH(IN_ENUM(ProjectType)),
+			projectEntryPoint: NULLISH(STR_NOT_EMPTY()),
 		},
 	}),
 	updateProject,

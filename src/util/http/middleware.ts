@@ -1,4 +1,3 @@
-import { UserRole } from "@prisma/client"
 import cors from "cors"
 import rateLimit from "express-rate-limit"
 
@@ -6,7 +5,6 @@ import {
 	ErrorArgMapping,
 	validateErrorArgs,
 } from "@/util/app/helpers/error-codes"
-import { featureFlag } from "@/util/config"
 import {
 	ALLOW_EXPIRED_SESSIONS,
 	ALLOW_NON_DB_SESSION_ID,
@@ -27,7 +25,7 @@ import {
 	StatusCodes,
 } from "@/util/defs/engraph-backend/common"
 import { ErrorCode, ErrorCodes } from "@/util/defs/engraph-backend/errors"
-import type { IRequest, ReqUserSession } from "@/util/http"
+import type { IRequest } from "@/util/http"
 import { parseJwtFromRequest } from "@/util/http/helpers"
 import { middlewareHandler } from "@/util/http/wrappers"
 import { LogLevel, log } from "@/util/log"
@@ -193,7 +191,6 @@ type ValidateAuthArgs = {
 	| {
 			allowAuthUsers: true
 			requireVerified: boolean
-			requireRoles?: UserRole[]
 	  }
 )
 
@@ -205,8 +202,7 @@ export function restrictEndpoint(args: ValidateAuthArgs) {
 			return next()
 		}
 		if (allowAuthUsers) {
-			const { requireVerified, requireRoles = Object.values(UserRole) } =
-				args
+			const { requireVerified } = args
 			if (!req.currentSession) {
 				return res.status(StatusCodes.UNAUTHENTICATED).json({
 					responseStatus: "ERR_UNAUTHENTICATED",
@@ -218,14 +214,6 @@ export function restrictEndpoint(args: ValidateAuthArgs) {
 			) {
 				return res.status(StatusCodes.UNAUTHORIZED).json({
 					responseStatus: "ERR_UNVERIFIED",
-				})
-			}
-
-			if (
-				!requireRoles.includes(req.currentSession!.sessionUser.userRole)
-			) {
-				return res.status(StatusCodes.UNAUTHORIZED).json({
-					responseStatus: "ERR_UNAUTHORIZED",
 				})
 			}
 		} else {
@@ -391,7 +379,7 @@ export function validateParams<
 				(valResult) => {
 					return valResult !== undefined
 				},
-			) as unknown as InvalidParam<ParamT, BodyT, QueryT>[]
+			)
 
 			return filteredValidationResults
 		}
@@ -496,47 +484,6 @@ export function validateParams<
 	})
 }
 
-export type CheckSessionAccessFn<
-	ParamT extends {} = {},
-	BodyT extends {} = {},
-	QueryT extends {} = {},
-> = (
-	app: ReqUserSession,
-	req: IRequest<ParamT, BodyT, QueryT>,
-) => boolean | Promise<boolean>
-
-type CheckAccessArgs<
-	ParamT extends {} = {},
-	BodyT extends {} = {},
-	QueryT extends {} = {},
-> = {
-	checkSessionAccess?: CheckSessionAccessFn<ParamT, BodyT, QueryT>
-}
-
-export function checkAccess<
-	ParamT extends {} = {},
-	BodyT extends {} = {},
-	QueryT extends {} = {},
->(args: CheckAccessArgs<ParamT, BodyT, QueryT>) {
-	return middlewareHandler<ParamT, BodyT, QueryT>(async (req, res, next) => {
-		const { checkSessionAccess } = args
-
-		if (req.currentSession && checkSessionAccess) {
-			const sessionAccess = await checkSessionAccess(
-				req.currentSession,
-				req,
-			)
-			if (!sessionAccess) {
-				return res.status(StatusCodes.UNAUTHORIZED).json({
-					responseStatus: "ERR_UNAUTHORIZED",
-				})
-			}
-		}
-
-		next()
-	})
-}
-
 export const xsrfProtection = middlewareHandler((req, res, next) => {
 	if (!USE_XSRF_PROTECTION) {
 		return next()
@@ -551,9 +498,33 @@ export const xsrfProtection = middlewareHandler((req, res, next) => {
 	})
 })
 
+export const noCache = middlewareHandler((req, res, next) => {
+	res.setHeader("Cache-Control", "no-store")
+	next()
+})
+
+type CacheEndpointArgs = {
+	cacheSeconds: number
+	cachePrivate?: boolean
+}
+
+export function cacheEndpoint(
+	args: CacheEndpointArgs = {
+		cacheSeconds: 86400,
+	},
+) {
+	const { cacheSeconds, cachePrivate = false } = args
+	return middlewareHandler((req, res, next) => {
+		res.setHeader("Cache-Control", `max-age=${cacheSeconds}`)
+		if (cachePrivate) {
+			res.setHeader("Cache-Control", "private")
+		}
+		next()
+	})
+}
+
 export const devRequestLogger = middlewareHandler((req, res, next) => {
 	const startTimestamp = Date.now()
-	res.setHeader("Cache-Control", "no-store")
 
 	log(
 		"http",
@@ -585,7 +556,15 @@ export const devRequestLogger = middlewareHandler((req, res, next) => {
 		JSON.stringify(req.query, null, 4),
 	)
 
+	const oldStatus = res.status
+
 	const oldJson = res.json
+
+	const newStatus: typeof res.status = (statusCode) => {
+		log("http", LogLevel.Debug, "Response Status", statusCode)
+		oldStatus.call(res, statusCode)
+		return res
+	}
 
 	const newJson: typeof res.json = (data) => {
 		log(
@@ -597,7 +576,7 @@ export const devRequestLogger = middlewareHandler((req, res, next) => {
 		log(
 			"http",
 			LogLevel.Debug,
-			"Response Body",
+			"Response JSON",
 			JSON.stringify(data, null, 4),
 		)
 		oldJson.call(res, data)
@@ -609,7 +588,7 @@ export const devRequestLogger = middlewareHandler((req, res, next) => {
 		)
 		return res
 	}
-
+	res.status = newStatus
 	res.json = newJson
 
 	next()
@@ -618,13 +597,13 @@ export const devRequestLogger = middlewareHandler((req, res, next) => {
 const baseCorsHandler = cors(CORS_CONFIG)
 
 export const corsHelper = middlewareHandler((req, res, next) => {
-	const isDevelopment = featureFlag()
-	const originHeader = req.headers["origin"]
-	if (!isDevelopment && !originHeader) {
-		return res.status(StatusCodes.TEAPOT).json({
-			responseStatus: "ERR_TEAPOT",
-		})
-	}
+	// const isDevelopment = featureFlag()
+	// const originHeader = req.headers["origin"]
+	// if (!isDevelopment && !originHeader) {
+	// 	return res.status(StatusCodes.TEAPOT).json({
+	// 		responseStatus: "ERR_TEAPOT",
+	// 	})
+	// }
 	return baseCorsHandler(req, res, next)
 })
 
