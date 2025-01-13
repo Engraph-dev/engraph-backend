@@ -18,11 +18,7 @@ export function log(serviceName: string, logLevel: LogLevel, ...data: any[]) {
 
 	const mappedData = data.map((dataObj) => {
 		if (dataObj instanceof Error) {
-			return {
-				name: dataObj.name,
-				message: dataObj.message,
-				stack: dataObj.stack,
-			}
+			return `${dataObj.name}\n${dataObj.message}\n${dataObj.stack}`
 		}
 		if (typeof dataObj === "object") {
 			return JSON.stringify(dataObj, null, 4)
