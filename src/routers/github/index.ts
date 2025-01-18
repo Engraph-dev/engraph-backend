@@ -1,6 +1,6 @@
-import { Router } from "express"
-
 import { githubEventsHandler } from "@/controllers/github"
+
+import { Router } from "@/util/http/router"
 
 const githubRouter = Router()
 

@@ -1,8 +1,7 @@
+import { createOrg } from "@/controllers/orgs"
+
 import { orgIdRouter } from "@/routers/orgs/[orgId]"
 import { myOrgRouter } from "@/routers/orgs/me"
-import { Router } from "express"
-
-import { createOrg } from "@/controllers/orgs"
 
 import { OrgIdValidator } from "@/util/app/validators/orgs"
 import { PASSWORD_LENGTH } from "@/util/config/auth"
@@ -11,6 +10,7 @@ import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type { CreateOrgBody } from "@/util/defs/engraph-backend/orgs"
 import type { OrgIdParams } from "@/util/defs/engraph-backend/orgs/[orgId]"
 import { restrictEndpoint, validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import {
 	IS_EMAIL,
 	NULLISH,
@@ -18,9 +18,7 @@ import {
 	STR_NOT_EMPTY,
 } from "@/util/http/validators"
 
-const orgRouter = Router({
-	mergeParams: true,
-})
+const orgRouter = Router()
 
 orgRouter.post<"/", NoParams, NoParams, CreateOrgBody, NoParams, NoParams>(
 	"/",

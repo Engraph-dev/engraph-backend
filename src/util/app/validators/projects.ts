@@ -33,13 +33,20 @@ export const OrgProjectLimit = EXPECT_TYPE<string>(
 	},
 )
 
-export const ProjectIdSameOrgValidator = EXPECT_TYPE<string>(
-	"string",
-	async (projectId, req) => {
+type ProjectEntityValidatorArgs = {
+	allowSameOrgOnly?: boolean
+}
+
+export function ProjectEntityValidator(
+	args: ProjectEntityValidatorArgs = {},
+): ValidatorFunction<string> {
+	return EXPECT_TYPE<string>("string", async (projectId, req) => {
 		const projectDoc = await db.project.findFirst({
 			where: {
 				projectId: projectId,
-				projectOrgId: req.currentSession!.orgId,
+				projectOrgId: args.allowSameOrgOnly
+					? req.currentSession!.orgId
+					: undefined,
 			},
 		})
 
@@ -53,8 +60,8 @@ export const ProjectIdSameOrgValidator = EXPECT_TYPE<string>(
 			errorCode: ErrorCodes.ProjectIdInvalid,
 			errorArgs: {},
 		})
-	},
-)
+	})
+}
 
 type ProjectAccessValidatorArgs = {
 	includeImplicit: boolean
@@ -71,6 +78,7 @@ function generateProjectAccessValidator(
 			const projectDoc = await db.project.findFirst({
 				where: {
 					projectId: projectId,
+					projectOrgId: req.currentSession!.orgId,
 					OR: [
 						{
 							projectTeams: {

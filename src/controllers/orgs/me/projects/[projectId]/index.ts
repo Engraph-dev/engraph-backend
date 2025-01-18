@@ -10,6 +10,7 @@ import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { ProjectResponse } from "@/util/defs/engraph-backend/orgs/me/projects"
 import type {
 	DeleteProjectParams,
+	GetProjectParams,
 	UpdateProjectBody,
 	UpdateProjectParams,
 } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]"
@@ -80,3 +81,21 @@ export const deleteProject = requestHandler<
 		responseStatus: "SUCCESS",
 	})
 })
+
+export const getProject = requestHandler<GetProjectParams, NoParams, NoParams>(
+	async (req, res) => {
+		const { projectId } = req.params
+
+		const projectData = await db.project.findFirstOrThrow({
+			where: {
+				projectId: projectId,
+				projectOrgId: req.currentSession!.orgId,
+			},
+		})
+
+		return res.status(StatusCodes.OK).json<ProjectResponse>({
+			responseStatus: "SUCCESS",
+			projectData: projectData,
+		})
+	},
+)

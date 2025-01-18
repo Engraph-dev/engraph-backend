@@ -1,5 +1,4 @@
 import { AccessLevel, ProjectSourceType, ProjectType } from "@prisma/client"
-import { Router } from "express"
 
 import { createProject, getProjects } from "@/controllers/orgs/me/projects"
 
@@ -8,7 +7,7 @@ import { myOrgProjectIdRouter } from "@/routers/orgs/me/projects/[projectId]"
 import { WithPagedQueryValidator } from "@/util/app/validators/common"
 import {
 	OrgProjectLimit,
-	ProjectIdSameOrgValidator,
+	ProjectEntityValidator,
 } from "@/util/app/validators/projects"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
@@ -17,9 +16,10 @@ import type {
 	ProjectId,
 } from "@/util/defs/engraph-backend/orgs/me/projects"
 import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import { ALL_OF, IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
 
-const myOrgProjectsRouter = Router({ mergeParams: true })
+const myOrgProjectsRouter = Router()
 
 myOrgProjectsRouter.get<"/", NoParams, NoParams, NoParams, GetProjectsQuery>(
 	"/",
@@ -64,7 +64,7 @@ myOrgProjectsRouter.use<
 	"/:projectId",
 	validateParams({
 		urlParams: {
-			projectId: ProjectIdSameOrgValidator,
+			projectId: ProjectEntityValidator({ allowSameOrgOnly: true }),
 		},
 	}),
 	myOrgProjectIdRouter,

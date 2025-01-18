@@ -1,8 +1,8 @@
 import { ProjectType } from "@prisma/client"
-import { Router } from "express"
 
 import {
 	deleteProject,
+	getProject,
 	updateProject,
 } from "@/controllers/orgs/me/projects/[projectId]"
 
@@ -10,13 +10,15 @@ import { OrgProjectLimit } from "@/util/app/validators/projects"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
 	DeleteProjectParams,
+	GetProjectParams,
 	UpdateProjectBody,
 	UpdateProjectParams,
 } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]"
 import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import { ALL_OF, IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
 
-const myOrgProjectIdRouter = Router({ mergeParams: true })
+const myOrgProjectIdRouter = Router()
 
 myOrgProjectIdRouter.patch<
 	"/",
@@ -45,5 +47,14 @@ myOrgProjectIdRouter.delete<
 	NoParams,
 	NoParams
 >("/", deleteProject)
+
+myOrgProjectIdRouter.get<
+	"/",
+	GetProjectParams,
+	NoParams,
+	NoParams,
+	NoParams,
+	NoParams
+>("/", getProject)
 
 export { myOrgProjectIdRouter }

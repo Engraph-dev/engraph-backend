@@ -93,6 +93,12 @@ export const createProject = requestHandler<
 			projectType: projectType,
 			projectBranch: projectBranch,
 			projectEntryPoint: projectEntryPoint,
+			projectUsers: {
+				create: {
+					userId: req.currentSession!.userId,
+					accessLevel: AccessLevel.Admin,
+				},
+			},
 		},
 	})
 
@@ -101,14 +107,6 @@ export const createProject = requestHandler<
 		eventType: EventType.ProjectCreate,
 		eventMetadata: {
 			projectId: projectData.projectId,
-		},
-	})
-
-	await db.projectUserAccess.create({
-		data: {
-			projectId: projectData.projectId,
-			userId: req.currentSession!.userId,
-			accessLevel: AccessLevel.Admin,
 		},
 	})
 

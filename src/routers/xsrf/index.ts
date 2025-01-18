@@ -1,10 +1,9 @@
-import { Router } from "express"
-
 import { getXSRFToken } from "@/controllers/xsrf"
 
 import type { NoParams } from "@/util/defs/engraph-backend/common"
+import { Router } from "@/util/http/router"
 
-const xsrfRouter = Router({ mergeParams: true })
+const xsrfRouter = Router()
 
 xsrfRouter.use<"/", NoParams, NoParams, NoParams, NoParams, NoParams>(
 	"/",

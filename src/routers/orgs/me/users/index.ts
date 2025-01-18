@@ -1,5 +1,4 @@
 import { UserRole } from "@prisma/client"
-import { Router } from "express"
 
 import { createUser, getUsers } from "@/controllers/orgs/me/users"
 
@@ -15,7 +14,8 @@ import type {
 	GetUsersQuery,
 } from "@/util/defs/engraph-backend/orgs/me/users"
 import type { UserId } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
-import { validateParams, xsrfProtection } from "@/util/http/middleware"
+import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import {
 	IN_ENUM,
 	NULLISH,
@@ -23,7 +23,7 @@ import {
 	STR_NOT_EMPTY,
 } from "@/util/http/validators"
 
-const usersRouter = Router({ mergeParams: true })
+const usersRouter = Router()
 
 usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 	"/",
@@ -53,7 +53,7 @@ usersRouter.use<"/:userId", UserId, NoParams, NoParams, NoParams, NoParams>(
 		urlParams: {
 			userId: UserEntityValidator({
 				allowSameOrgOnly: true,
-				allowSameUserAsReq: false,
+				allowSameUserAsRequest: false,
 			}),
 		},
 	}),
