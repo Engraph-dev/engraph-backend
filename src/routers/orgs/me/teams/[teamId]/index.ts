@@ -1,6 +1,10 @@
 import { UserRole } from "@prisma/client"
 
-import { deleteTeam, getTeam, updateTeam } from "@/controllers/teams/[teamId]"
+import {
+	deleteTeam,
+	getTeam,
+	updateTeam,
+} from "@/controllers/orgs/me/teams/[teamId]"
 
 import { myOrgTeamIdUsersRouter } from "@/routers/orgs/me/teams/[teamId]/users"
 

@@ -1,3 +1,6 @@
+import { EventType } from "@prisma/client"
+
+import { getEventData, logEvent } from "@/util/app/events"
 import { getMiniUser } from "@/util/app/helpers/users"
 import db from "@/util/db"
 import { StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -42,6 +45,15 @@ export const addTeamUser = requestHandler<AddTeamUserParams>(
 			},
 		})
 
+		logEvent({
+			...getEventData(req),
+			eventType: EventType.TeamUserAdd,
+			eventMetadata: {
+				teamId: teamData.teamId,
+				userId: userId,
+			},
+		})
+
 		const mappedTeamData = {
 			...teamData,
 			teamUsers: teamData.teamUsers.map((teamUser) => {
@@ -81,6 +93,15 @@ export const deleteTeamUser = requestHandler<DeleteTeamUserParams>(
 						linkedUser: true,
 					},
 				},
+			},
+		})
+
+		logEvent({
+			...getEventData(req),
+			eventType: EventType.TeamUserDelete,
+			eventMetadata: {
+				teamId: teamData.teamId,
+				userId: userId,
 			},
 		})
 

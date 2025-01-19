@@ -1,3 +1,6 @@
+import { EventType } from "@prisma/client"
+
+import { getEventData, logEvent } from "@/util/app/events"
 import { getMiniUser } from "@/util/app/helpers/users"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -36,6 +39,14 @@ export const updateTeam = requestHandler<
 		},
 	})
 
+	logEvent({
+		...getEventData(req),
+		eventType: EventType.TeamUpdate,
+		eventMetadata: {
+			teamId: teamData.teamId,
+		},
+	})
+
 	const mappedTeamData = {
 		...teamData,
 		teamUsers: teamData.teamUsers.map((teamUser) => {
@@ -57,6 +68,14 @@ export const deleteTeam = requestHandler<DeleteTeamParams, NoParams, NoParams>(
 			where: {
 				teamId: teamId,
 				teamOrgId: req.currentSession!.orgId,
+			},
+		})
+
+		logEvent({
+			...getEventData(req),
+			eventType: EventType.TeamDelete,
+			eventMetadata: {
+				teamId: teamId,
 			},
 		})
 

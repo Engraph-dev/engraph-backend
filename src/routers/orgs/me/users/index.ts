@@ -17,7 +17,7 @@ import type { UserId } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
 import {
-	IN_ENUM,
+	IN_ARRAY,
 	NULLISH,
 	STRLEN_MIN,
 	STR_NOT_EMPTY,
@@ -33,7 +33,11 @@ usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 			userLastName: NULLISH(STR_NOT_EMPTY()),
 			userMail: UnusedEmail({ sameOrg: true }),
 			userPassword: STRLEN_MIN(PASSWORD_LENGTH),
-			userRole: IN_ENUM(UserRole),
+			userRole: IN_ARRAY<UserRole>([
+				UserRole.Admin,
+				UserRole.Developer,
+				UserRole.Viewer,
+			]),
 		},
 	}),
 	createUser,

@@ -1,7 +1,7 @@
 import {
 	addTeamUser,
 	deleteTeamUser,
-} from "@/controllers/teams/[teamId]/users/[userId]"
+} from "@/controllers/orgs/me/teams/[teamId]/users/[userId]"
 
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {

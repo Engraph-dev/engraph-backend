@@ -1,3 +1,4 @@
+import { getEventData, logEvent } from "@/util/app/events"
 import { getQueryOffset } from "@/util/app/helpers"
 import { getMiniUser } from "@/util/app/helpers/users"
 import db from "@/util/db"
@@ -9,6 +10,7 @@ import {
 	type GetTeamsResponse,
 } from "@/util/defs/engraph-backend/orgs/teams"
 import { requestHandler } from "@/util/http/wrappers"
+import { EventType } from "@prisma/client"
 
 export const createTeam = requestHandler<NoParams, CreateTeamBody, NoParams>(
 	async (req, res) => {
@@ -25,6 +27,14 @@ export const createTeam = requestHandler<NoParams, CreateTeamBody, NoParams>(
 						linkedUser: true,
 					},
 				},
+			},
+		})
+
+		logEvent({
+			...getEventData(req),
+			eventType: EventType.TeamCreate,
+			eventMetadata: {
+				teamId: teamData.teamId,
 			},
 		})
 

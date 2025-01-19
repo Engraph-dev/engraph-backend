@@ -38,6 +38,14 @@ export const metadataMapping = {
 	[EventType.TeamCreate]: { teamId: MetavalTypes.String },
 	[EventType.TeamUpdate]: { teamId: MetavalTypes.String },
 	[EventType.TeamDelete]: { teamId: MetavalTypes.String },
+	[EventType.TeamUserAdd]: {
+		userId: MetavalTypes.String,
+		teamId: MetavalTypes.String,
+	},
+	[EventType.TeamUserDelete]: {
+		userId: MetavalTypes.String,
+		teamId: MetavalTypes.String,
+	},
 	[EventType.S3RequestCreate]: {
 		requestId: MetavalTypes.String,
 	},

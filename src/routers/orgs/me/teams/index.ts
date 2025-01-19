@@ -1,6 +1,6 @@
 import { UserRole } from "@prisma/client"
 
-import { createTeam, getTeams } from "@/controllers/teams"
+import { createTeam, getTeams } from "@/controllers/orgs/me/teams"
 
 import { myOrgTeamIdRouter } from "@/routers/orgs/me/teams/[teamId]"
 
