@@ -1,4 +1,4 @@
-import { ProjectType } from "@prisma/client"
+import { ProjectType, UserRole } from "@prisma/client"
 
 import {
 	deleteProject,
@@ -6,8 +6,13 @@ import {
 	updateProject,
 } from "@/controllers/orgs/me/projects/[projectId]"
 
-import { OrgProjectLimit } from "@/util/app/validators/projects"
+import { projectIdTeamsRouter } from "@/routers/orgs/me/projects/[projectId]/teams"
+import { projectIdUsersRouter } from "@/routers/orgs/me/projects/[projectId]/users"
+
+import { requireOrgRole } from "@/util/app/middleware/orgs"
+import { ProjectAdminAccessValidator } from "@/util/app/validators/projects"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
+import type { ProjectId } from "@/util/defs/engraph-backend/orgs/me/projects"
 import type {
 	DeleteProjectParams,
 	GetProjectParams,
@@ -16,7 +21,7 @@ import type {
 } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
-import { ALL_OF, IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
+import { IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
 
 const myOrgProjectIdRouter = Router()
 
@@ -29,9 +34,13 @@ myOrgProjectIdRouter.patch<
 	NoParams
 >(
 	"/",
-	validateParams<UpdateProjectParams, UpdateProjectBody, NoParams>({
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
+	validateParams({
 		bodyParams: {
-			projectName: NULLISH(ALL_OF([STR_NOT_EMPTY(), OrgProjectLimit])),
+			projectName: NULLISH(STR_NOT_EMPTY()),
 			projectType: NULLISH(IN_ENUM(ProjectType)),
 			projectEntryPoint: NULLISH(STR_NOT_EMPTY()),
 		},
@@ -46,7 +55,14 @@ myOrgProjectIdRouter.delete<
 	NoParams,
 	NoParams,
 	NoParams
->("/", deleteProject)
+>(
+	"/",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
+	deleteProject,
+)
 
 myOrgProjectIdRouter.get<
 	"/",
@@ -56,5 +72,24 @@ myOrgProjectIdRouter.get<
 	NoParams,
 	NoParams
 >("/", getProject)
+
+myOrgProjectIdRouter.use<ProjectId>(
+	"/users",
+	validateParams({
+		urlParams: {
+			projectId: ProjectAdminAccessValidator({ includeImplicit: true }),
+		},
+	}),
+	projectIdUsersRouter,
+)
+myOrgProjectIdRouter.use<ProjectId>(
+	"/teams",
+	validateParams({
+		urlParams: {
+			projectId: ProjectAdminAccessValidator({ includeImplicit: true }),
+		},
+	}),
+	projectIdTeamsRouter,
+)
 
 export { myOrgProjectIdRouter }

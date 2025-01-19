@@ -14,7 +14,7 @@ type RequireOrgAccessArgs = {
  * @param args.userRole The minimum user role required to access the resource
  * @param args.includeImplicit Whether to include implicit elevated roles in the check
  */
-export function requireOrgAccess(
+export function requireOrgRole(
 	args: RequireOrgAccessArgs = {
 		userRole: UserRole.Viewer,
 		includeImplicit: true,

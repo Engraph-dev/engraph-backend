@@ -9,7 +9,7 @@ import {
 	type AddTeamUserResponse,
 	DeleteTeamUserParams,
 	type DeleteTeamUserResponse,
-} from "@/util/defs/engraph-backend/orgs/teams/[teamId]/users/[userId]"
+} from "@/util/defs/engraph-backend/orgs/me/teams/[teamId]/users/[userId]"
 import { requestHandler } from "@/util/http/wrappers"
 
 export const addTeamUser = requestHandler<AddTeamUserParams>(

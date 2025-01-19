@@ -7,7 +7,7 @@ import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
 	AddTeamUserParams,
 	DeleteTeamUserParams,
-} from "@/util/defs/engraph-backend/orgs/teams/[teamId]/users/[userId]"
+} from "@/util/defs/engraph-backend/orgs/me/teams/[teamId]/users/[userId]"
 import { Router } from "@/util/http/router"
 
 const myOrgsTeamsUsersUserIdRouter = Router()

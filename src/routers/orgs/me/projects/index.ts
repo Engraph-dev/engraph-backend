@@ -1,9 +1,15 @@
-import { AccessLevel, ProjectSourceType, ProjectType } from "@prisma/client"
+import {
+	AccessLevel,
+	ProjectSourceType,
+	ProjectType,
+	UserRole,
+} from "@prisma/client"
 
 import { createProject, getProjects } from "@/controllers/orgs/me/projects"
 
 import { myOrgProjectIdRouter } from "@/routers/orgs/me/projects/[projectId]"
 
+import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { WithPagedQueryValidator } from "@/util/app/validators/common"
 import {
 	OrgProjectLimit,
@@ -40,6 +46,10 @@ myOrgProjectsRouter.post<
 	NoParams
 >(
 	"/",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
 	validateParams<NoParams, CreateProjectBody, NoParams>({
 		bodyParams: {
 			projectName: ALL_OF([STR_NOT_EMPTY(), OrgProjectLimit]),

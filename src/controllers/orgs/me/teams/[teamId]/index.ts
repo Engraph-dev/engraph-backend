@@ -1,6 +1,10 @@
 import { EventType } from "@prisma/client"
 
 import { getEventData, logEvent } from "@/util/app/events"
+import {
+	IdentSuffixType,
+	generateIdentifierFromString,
+} from "@/util/app/helpers/data-handlers"
 import { getMiniUser } from "@/util/app/helpers/users"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -11,7 +15,7 @@ import {
 	type UpdateTeamBody,
 	type UpdateTeamParams,
 	type UpdateTeamResponse,
-} from "@/util/defs/engraph-backend/orgs/teams/[teamId]"
+} from "@/util/defs/engraph-backend/orgs/me/teams/[teamId]"
 import { requestHandler } from "@/util/http/wrappers"
 
 export const updateTeam = requestHandler<
@@ -22,6 +26,10 @@ export const updateTeam = requestHandler<
 	const { teamId } = req.params
 	const { teamName } = req.body
 
+	const newTeamId = teamName
+		? generateIdentifierFromString(teamName, IdentSuffixType.MiniCuid)
+		: teamId
+
 	const teamData = await db.team.update({
 		where: {
 			teamId: teamId,
@@ -29,6 +37,7 @@ export const updateTeam = requestHandler<
 		},
 		data: {
 			teamName: teamName,
+			teamId: newTeamId,
 		},
 		include: {
 			teamUsers: {
@@ -98,6 +107,11 @@ export const getTeam = requestHandler<GetTeamParams, NoParams, NoParams>(
 				teamUsers: {
 					include: {
 						linkedUser: true,
+					},
+					orderBy: {
+						linkedUser: {
+							userRole: "asc",
+						},
 					},
 				},
 			},

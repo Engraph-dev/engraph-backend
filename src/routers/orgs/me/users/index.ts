@@ -6,7 +6,7 @@ import { userIdRouter } from "@/routers/orgs/me/users/[userId]"
 
 import { UnusedEmail } from "@/util/app/validators/auth"
 import { PagedQueryValidator } from "@/util/app/validators/common"
-import { UserEntityValidator } from "@/util/app/validators/users"
+import { OrgUserLimit, UserEntityValidator } from "@/util/app/validators/users"
 import { PASSWORD_LENGTH } from "@/util/config/auth"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
@@ -17,6 +17,7 @@ import type { UserId } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
 import {
+	ALL_OF,
 	IN_ARRAY,
 	NULLISH,
 	STRLEN_MIN,
@@ -31,7 +32,7 @@ usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 		bodyParams: {
 			userFirstName: STR_NOT_EMPTY(),
 			userLastName: NULLISH(STR_NOT_EMPTY()),
-			userMail: UnusedEmail({ sameOrg: true }),
+			userMail: ALL_OF([UnusedEmail({ sameOrg: true }), OrgUserLimit]),
 			userPassword: STRLEN_MIN(PASSWORD_LENGTH),
 			userRole: IN_ARRAY<UserRole>([
 				UserRole.Admin,

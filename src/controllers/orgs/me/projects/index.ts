@@ -94,6 +94,8 @@ export const createProject = requestHandler<
 			projectBranch: projectBranch,
 			projectEntryPoint: projectEntryPoint,
 			projectUsers: {
+				// Implicitly add current user as admin for that project
+				// Note that this doesn't mean they are an org admin
 				create: {
 					userId: req.currentSession!.userId,
 					accessLevel: AccessLevel.Admin,

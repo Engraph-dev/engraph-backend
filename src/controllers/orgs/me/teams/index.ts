@@ -1,5 +1,11 @@
+import { EventType } from "@prisma/client"
+
 import { getEventData, logEvent } from "@/util/app/events"
 import { getQueryOffset } from "@/util/app/helpers"
+import {
+	IdentSuffixType,
+	generateIdentifierFromString,
+} from "@/util/app/helpers/data-handlers"
 import { getMiniUser } from "@/util/app/helpers/users"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -8,9 +14,8 @@ import {
 	type CreateTeamResponse,
 	type GetTeamsQuery,
 	type GetTeamsResponse,
-} from "@/util/defs/engraph-backend/orgs/teams"
+} from "@/util/defs/engraph-backend/orgs/me/teams"
 import { requestHandler } from "@/util/http/wrappers"
-import { EventType } from "@prisma/client"
 
 export const createTeam = requestHandler<NoParams, CreateTeamBody, NoParams>(
 	async (req, res) => {
@@ -18,8 +23,17 @@ export const createTeam = requestHandler<NoParams, CreateTeamBody, NoParams>(
 
 		const teamData = await db.team.create({
 			data: {
+				teamId: generateIdentifierFromString(
+					teamName,
+					IdentSuffixType.MiniCuid,
+				),
 				teamName: teamName,
 				teamOrgId: req.currentSession!.orgId,
+				teamUsers:{
+					create: {
+						userId: req.currentSession!.userId,
+					}
+				}
 			},
 			include: {
 				teamUsers: {

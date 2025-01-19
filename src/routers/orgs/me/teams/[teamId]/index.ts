@@ -8,14 +8,14 @@ import {
 
 import { myOrgTeamIdUsersRouter } from "@/routers/orgs/me/teams/[teamId]/users"
 
-import { requireOrgAccess } from "@/util/app/middleware/orgs"
+import { requireOrgRole } from "@/util/app/middleware/orgs"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
 	DeleteTeamParams,
 	GetTeamParams,
 	UpdateTeamBody,
 	UpdateTeamParams,
-} from "@/util/defs/engraph-backend/orgs/teams/[teamId]"
+} from "@/util/defs/engraph-backend/orgs/me/teams/[teamId]"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
 import { NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
@@ -33,7 +33,7 @@ myOrgTeamIdRouter.patch<
 	NoParams
 >(
 	"/",
-	requireOrgAccess({ userRole: UserRole.Admin, includeImplicit: true }),
+	requireOrgRole({ userRole: UserRole.Admin, includeImplicit: true }),
 	validateParams({
 		bodyParams: {
 			teamName: NULLISH(STR_NOT_EMPTY()),
@@ -51,13 +51,13 @@ myOrgTeamIdRouter.delete<
 	NoParams
 >(
 	"/",
-	requireOrgAccess({ userRole: UserRole.Admin, includeImplicit: true }),
+	requireOrgRole({ userRole: UserRole.Admin, includeImplicit: true }),
 	deleteTeam,
 )
 
 myOrgTeamIdRouter.use(
 	"/users",
-	requireOrgAccess({ userRole: UserRole.Admin, includeImplicit: true }),
+	requireOrgRole({ userRole: UserRole.Admin, includeImplicit: true }),
 	myOrgTeamIdUsersRouter,
 )
 
