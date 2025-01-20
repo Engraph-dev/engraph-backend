@@ -1,3 +1,4 @@
+import { featureFlag } from "@/util/config"
 import { DEV_COOKIE_OPTIONS, PROD_COOKIE_OPTIONS } from "@/util/config/auth"
 import db from "@/util/db"
 import type { IRequest } from "@/util/http"
@@ -7,9 +8,9 @@ export type CookieOpts = {
 }
 
 export function cookieOptions(req: IRequest, opts?: CookieOpts) {
-	const cookieEntries = Object.entries(
-		req.protocol === "http" ? DEV_COOKIE_OPTIONS : PROD_COOKIE_OPTIONS,
-	)
+	const cookieOpts = featureFlag(DEV_COOKIE_OPTIONS, PROD_COOKIE_OPTIONS)
+
+	const cookieEntries = Object.entries(cookieOpts)
 
 	const cookieEntriesWithExpiry = [
 		...cookieEntries,
