@@ -49,14 +49,17 @@ export const UserIdValidator = EXPECT_TYPE<string>("string", async (userId) => {
 
 type UserEntityValidatorArgs = {
 	allowSameOrgOnly?: boolean
-	allowSameUserAsReq?: boolean
+	allowSameUserAsRequest?: boolean
 }
 
 export function UserEntityValidator(
 	args: UserEntityValidatorArgs = {},
 ): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", async (userId, req) => {
-		if (userId === req.currentSession!.userId && !args.allowSameUserAsReq) {
+		if (
+			userId === req.currentSession!.userId &&
+			!args.allowSameUserAsRequest
+		) {
 			return invalidParam({
 				errorCode: ErrorCodes.InvalidUserId,
 				errorArgs: {},

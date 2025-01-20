@@ -56,6 +56,8 @@ export const PROD_COOKIE_OPTIONS: CookieOptions = {
 export const DEV_COOKIE_OPTIONS: CookieOptions = {
 	Path: "/",
 	HttpOnly: undefined,
+	Secure: undefined,
+	SameSite: "None",
 }
 
 export const SESSION_VALIDITY_SECONDS = 7 /*d*/ * 24 /*h*/ * 60 /*m*/ * 60 /*s*/

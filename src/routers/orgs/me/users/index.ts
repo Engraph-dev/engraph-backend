@@ -1,5 +1,4 @@
 import { UserRole } from "@prisma/client"
-import { Router } from "express"
 
 import { createUser, getUsers } from "@/controllers/orgs/me/users"
 
@@ -7,7 +6,7 @@ import { userIdRouter } from "@/routers/orgs/me/users/[userId]"
 
 import { UnusedEmail } from "@/util/app/validators/auth"
 import { PagedQueryValidator } from "@/util/app/validators/common"
-import { UserEntityValidator } from "@/util/app/validators/users"
+import { OrgUserLimit, UserEntityValidator } from "@/util/app/validators/users"
 import { PASSWORD_LENGTH } from "@/util/config/auth"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
@@ -15,15 +14,17 @@ import type {
 	GetUsersQuery,
 } from "@/util/defs/engraph-backend/orgs/me/users"
 import type { UserId } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
-import { validateParams, xsrfProtection } from "@/util/http/middleware"
+import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import {
-	IN_ENUM,
+	ALL_OF,
+	IN_ARRAY,
 	NULLISH,
 	STRLEN_MIN,
 	STR_NOT_EMPTY,
 } from "@/util/http/validators"
 
-const usersRouter = Router({ mergeParams: true })
+const usersRouter = Router()
 
 usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 	"/",
@@ -31,9 +32,13 @@ usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 		bodyParams: {
 			userFirstName: STR_NOT_EMPTY(),
 			userLastName: NULLISH(STR_NOT_EMPTY()),
-			userMail: UnusedEmail({ sameOrg: true }),
+			userMail: ALL_OF([UnusedEmail({ sameOrg: true }), OrgUserLimit]),
 			userPassword: STRLEN_MIN(PASSWORD_LENGTH),
-			userRole: IN_ENUM(UserRole),
+			userRole: IN_ARRAY<UserRole>([
+				UserRole.Admin,
+				UserRole.Developer,
+				UserRole.Viewer,
+			]),
 		},
 	}),
 	createUser,
@@ -53,7 +58,7 @@ usersRouter.use<"/:userId", UserId, NoParams, NoParams, NoParams, NoParams>(
 		urlParams: {
 			userId: UserEntityValidator({
 				allowSameOrgOnly: true,
-				allowSameUserAsReq: false,
+				allowSameUserAsRequest: false,
 			}),
 		},
 	}),

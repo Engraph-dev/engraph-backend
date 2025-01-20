@@ -1,5 +1,3 @@
-import { Router } from "express"
-
 import {
 	closeUserSession,
 	getUserSessions,
@@ -12,8 +10,9 @@ import type {
 	GetUserSessionsParams,
 } from "@/util/defs/engraph-backend/orgs/me/users/[userId]/sessions"
 import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 
-const userIdSessionsRouter = Router({ mergeParams: true })
+const userIdSessionsRouter = Router()
 
 userIdSessionsRouter.get<
 	"/",

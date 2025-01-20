@@ -1,0 +1,7 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # Type of dependencies (npm, pip, bundler, etc.)
+    directory: "/"           # Directory where the dependencies file is located
+    schedule:
+      interval: "weekly"    # How often to check for updates (daily, weekly, monthly)
+    target-branch: "staging" # Specify the branch name here
