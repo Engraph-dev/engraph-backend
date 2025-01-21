@@ -86,10 +86,11 @@ export const getUsers = requestHandler<NoParams, NoParams, GetUsersQuery>(
 
 export const searchUsers = requestHandler<NoParams, NoParams, SearchUsersQuery>(
 	async (req, res) => {
-		const { pageSize, searchPage, searchQuery } = req.query
+		const { searchQuery } = req.query
 
 		const orgUsers = await db.user.findMany({
 			where: {
+				userOrgId: req.currentSession!.orgId,
 				OR: [
 					{
 						userFirstName: {

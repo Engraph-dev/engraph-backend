@@ -1,10 +1,6 @@
 import { EventType } from "@prisma/client"
 
 import { getEventData, logEvent } from "@/util/app/events"
-import {
-	IdentSuffixType,
-	generateIdentifierFromString,
-} from "@/util/app/helpers/data-handlers"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import { ProjectResponse } from "@/util/defs/engraph-backend/orgs/me/projects"
@@ -24,10 +20,6 @@ export const updateProject = requestHandler<
 	const { projectId } = req.params
 	const { projectName, projectType, projectEntryPoint } = req.body
 
-	const newProjectId = projectName
-		? generateIdentifierFromString(projectName, IdentSuffixType.MiniCuid)
-		: projectId
-
 	const projectData = await db.project.update({
 		where: {
 			projectId: projectId,
@@ -37,7 +29,6 @@ export const updateProject = requestHandler<
 			projectName: projectName,
 			projectType: projectType,
 			projectEntryPoint: projectEntryPoint,
-			projectId: newProjectId,
 		},
 	})
 

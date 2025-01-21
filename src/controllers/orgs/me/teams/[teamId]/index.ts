@@ -1,10 +1,6 @@
 import { EventType } from "@prisma/client"
 
 import { getEventData, logEvent } from "@/util/app/events"
-import {
-	IdentSuffixType,
-	generateIdentifierFromString,
-} from "@/util/app/helpers/data-handlers"
 import { getMiniUser } from "@/util/app/helpers/users"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
@@ -26,10 +22,6 @@ export const updateTeam = requestHandler<
 	const { teamId } = req.params
 	const { teamName } = req.body
 
-	const newTeamId = teamName
-		? generateIdentifierFromString(teamName, IdentSuffixType.MiniCuid)
-		: teamId
-
 	const teamData = await db.team.update({
 		where: {
 			teamId: teamId,
@@ -37,7 +29,6 @@ export const updateTeam = requestHandler<
 		},
 		data: {
 			teamName: teamName,
-			teamId: newTeamId,
 		},
 		include: {
 			teamUsers: {
