@@ -6,12 +6,12 @@ import { ErrorCodes } from "@/util/defs/engraph-backend/errors"
 import type { ProjectIdWorkflowId } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]/workflows"
 import { type BatchValidator, invalidParam } from "@/util/http/middleware"
 
-type WorkflowProjectEntityBatchValidatorArgs = {
+type ProjectWorkflowEntityBatchValidatorArgs = {
 	workflowStatuses?: WorkflowStatus[]
 }
 
-export function WorkflowProjectEntityBatchValidator(
-	args: WorkflowProjectEntityBatchValidatorArgs,
+export function ProjectWorkflowEntityBatchValidator(
+	args: ProjectWorkflowEntityBatchValidatorArgs,
 ): BatchValidator<
 	ProjectIdWorkflowId,
 	ProjectIdWorkflowId,

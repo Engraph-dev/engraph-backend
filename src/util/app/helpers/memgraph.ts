@@ -7,11 +7,10 @@ import {
 } from "neo4j-driver"
 
 import {
-	MEMGRAPH_BOLT_PORT,
-	MEMGRAPH_HOST,
 	MEMGRAPH_ROOT_DB,
 	MEMGRAPH_ROOT_PASSWORD,
 	MEMGRAPH_ROOT_USER,
+	MEMGRAPH_URI,
 } from "@/util/config/memgraph"
 import { LogLevel, log } from "@/util/log"
 
@@ -33,10 +32,7 @@ export async function getGraphDb(
 ) {
 	const { userName, userPass } = dbCredentials
 
-	const dbDriver = driver(
-		`bolt://${MEMGRAPH_HOST}:${MEMGRAPH_BOLT_PORT}`,
-		auth.basic(userName, userPass),
-	)
+	const dbDriver = driver(MEMGRAPH_URI, auth.basic(userName, userPass))
 
 	return dbDriver
 }
