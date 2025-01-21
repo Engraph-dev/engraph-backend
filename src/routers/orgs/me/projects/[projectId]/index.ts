@@ -8,6 +8,7 @@ import {
 
 import { projectIdTeamsRouter } from "@/routers/orgs/me/projects/[projectId]/teams"
 import { projectIdUsersRouter } from "@/routers/orgs/me/projects/[projectId]/users"
+import { projectWorkflowsRouter } from "@/routers/orgs/me/projects/[projectId]/workflows"
 
 import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { ProjectAdminAccessValidator } from "@/util/app/validators/projects"
@@ -21,7 +22,13 @@ import type {
 } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
-import { IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
+import {
+	EXPECT_TYPE,
+	IN_ENUM,
+	NOVALIDATE,
+	NULLISH,
+	STR_NOT_EMPTY,
+} from "@/util/http/validators"
 
 const myOrgProjectIdRouter = Router()
 
@@ -42,7 +49,9 @@ myOrgProjectIdRouter.patch<
 		bodyParams: {
 			projectName: NULLISH(STR_NOT_EMPTY()),
 			projectType: NULLISH(IN_ENUM(ProjectType)),
-			projectEntryPoint: NULLISH(STR_NOT_EMPTY()),
+			projectEntryPoint: NULLISH(
+				EXPECT_TYPE<string>("string", NOVALIDATE()),
+			),
 		},
 	}),
 	updateProject,
@@ -82,6 +91,7 @@ myOrgProjectIdRouter.use<ProjectId>(
 	}),
 	projectIdUsersRouter,
 )
+
 myOrgProjectIdRouter.use<ProjectId>(
 	"/teams",
 	validateParams({
@@ -91,5 +101,7 @@ myOrgProjectIdRouter.use<ProjectId>(
 	}),
 	projectIdTeamsRouter,
 )
+
+myOrgProjectIdRouter.use<ProjectId>("/workflows", projectWorkflowsRouter)
 
 export { myOrgProjectIdRouter }

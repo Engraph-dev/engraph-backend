@@ -23,7 +23,14 @@ import type {
 } from "@/util/defs/engraph-backend/orgs/me/projects"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
-import { ALL_OF, IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
+import {
+	ALL_OF,
+	EXPECT_TYPE,
+	IN_ENUM,
+	NOVALIDATE,
+	NULLISH,
+	STR_NOT_EMPTY,
+} from "@/util/http/validators"
 
 const myOrgProjectsRouter = Router()
 
@@ -57,7 +64,7 @@ myOrgProjectsRouter.post<
 			projectIdentifier: STR_NOT_EMPTY(),
 			projectBranch: STR_NOT_EMPTY(),
 			projectType: IN_ENUM(ProjectType),
-			projectEntryPoint: STR_NOT_EMPTY(),
+			projectEntryPoint: EXPECT_TYPE<string>("string", NOVALIDATE()),
 		},
 	}),
 	createProject,
