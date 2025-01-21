@@ -145,7 +145,7 @@ export const ErrorArgMapping = {
 	[ErrorCodes.TeamQuotaExceeded]: {},
 	// Project Access Missing
 	[ErrorCodes.ProjectAccessMissing]: {},
-
+	[ErrorCodes.WorkflowIdInvalid]: {},
 	// Unknown error
 	[ErrorCodes.Unknown]: {},
 } satisfies Record<ErrorCode, Record<string, MetavalValue>>
