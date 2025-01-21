@@ -22,8 +22,8 @@ export const XSRF_TIMEOUT_SECONDS = 60
 
 export const USE_RATE_LIMIT = featureFlag()
 export const RATE_LIMIT_WINDOW_SECONDS = 300
-export const GET_RATE_LIMIT_WINDOW = 100
-export const NON_GET_RATE_LIMIT_WINDOW = 25
+export const GET_RATE_LIMIT = 100
+export const NON_GET_RATE_LIMIT = 25
 
 const COMMON_RATE_LIMIT_CONFIG: Partial<RateLimitOptions> = {
 	windowMs: RATE_LIMIT_WINDOW_SECONDS * 1000,
@@ -46,7 +46,7 @@ const COMMON_RATE_LIMIT_CONFIG: Partial<RateLimitOptions> = {
 // Rate limiter for non-GET requests
 export const ACTION_RATE_LIMIT_CONFIG: Partial<RateLimitOptions> = {
 	...COMMON_RATE_LIMIT_CONFIG,
-	max: NON_GET_RATE_LIMIT_WINDOW, // non-GET requests per session / IP
+	max: NON_GET_RATE_LIMIT, // non-GET requests per session / IP
 	skip: (req: IRequest, res: IResponse) => {
 		if (!USE_RATE_LIMIT) {
 			return true
@@ -65,7 +65,7 @@ export const ACTION_RATE_LIMIT_CONFIG: Partial<RateLimitOptions> = {
 // Rate limiter for GET requests
 export const GET_RATE_LIMIT_CONFIG: Partial<RateLimitOptions> = {
 	...COMMON_RATE_LIMIT_CONFIG,
-	max: GET_RATE_LIMIT_WINDOW, // GET requests per session / IP
+	max: GET_RATE_LIMIT, // GET requests per session / IP
 	skip: (req: IRequest, res: IResponse) => {
 		if (!USE_RATE_LIMIT) {
 			return true
