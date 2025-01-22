@@ -316,6 +316,10 @@ export function FORCE_FAIL<T>(
 	}
 }
 
+export function STRING(): ValidatorFunction<string> {
+	return EXPECT_TYPE<string>("string", NOVALIDATE())
+}
+
 // String length must exactly be equal E1002
 export function STRLEN_EQ(strLen: number): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
@@ -533,6 +537,10 @@ export function IS_OBJECT_URL(
 			})
 		}
 	})
+}
+
+export function NUMBER(): ValidatorFunction<number> {
+	return EXPECT_TYPE<number>("number", NOVALIDATE())
 }
 
 // Number should be non-zero

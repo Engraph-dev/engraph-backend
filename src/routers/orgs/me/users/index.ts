@@ -24,6 +24,7 @@ import {
 	ALL_OF,
 	IN_ARRAY,
 	NULLISH,
+	STRING,
 	STRLEN_MIN,
 	STR_NOT_EMPTY,
 } from "@/util/http/validators"
@@ -67,7 +68,7 @@ usersRouter.get<
 	"/search",
 	validateParams({
 		queryParams: WithPagedQueryValidator({
-			searchQuery: NULLISH(STR_NOT_EMPTY()),
+			searchQuery: NULLISH(STRING()),
 		}),
 	}),
 	searchUsers,

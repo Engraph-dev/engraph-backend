@@ -13,7 +13,8 @@ import {
 	type CreateTeamBody,
 	type CreateTeamResponse,
 	type GetTeamsQuery,
-	type GetTeamsResponse,
+	type SearchTeamsQuery,
+	type TeamsResponse,
 } from "@/util/defs/engraph-backend/orgs/me/teams"
 import { requestHandler } from "@/util/http/wrappers"
 
@@ -29,11 +30,11 @@ export const createTeam = requestHandler<NoParams, CreateTeamBody, NoParams>(
 				),
 				teamName: teamName,
 				teamOrgId: req.currentSession!.orgId,
-				teamUsers:{
+				teamUsers: {
 					create: {
 						userId: req.currentSession!.userId,
-					}
-				}
+					},
+				},
 			},
 			include: {
 				teamUsers: {
@@ -76,6 +77,7 @@ export const getTeams = requestHandler<NoParams, NoParams, GetTeamsQuery>(
 				_count: {
 					select: {
 						teamUsers: true,
+						teamProjects: true,
 					},
 				},
 			},
@@ -84,7 +86,7 @@ export const getTeams = requestHandler<NoParams, NoParams, GetTeamsQuery>(
 
 		const mappedTeams = orgTeams.map((orgTeam) => {
 			const {
-				_count: { teamUsers },
+				_count: { teamUsers, teamProjects },
 				teamId,
 				teamName,
 				teamOrgId,
@@ -94,10 +96,56 @@ export const getTeams = requestHandler<NoParams, NoParams, GetTeamsQuery>(
 				teamName: teamName,
 				teamOrgId: teamOrgId,
 				userCount: teamUsers,
-			} satisfies GetTeamsResponse["orgTeams"][number]
+				projectCount: teamProjects,
+			} satisfies TeamsResponse["orgTeams"][number]
 		})
 
-		return res.status(StatusCodes.OK).json<GetTeamsResponse>({
+		return res.status(StatusCodes.OK).json<TeamsResponse>({
+			responseStatus: "SUCCESS",
+			orgTeams: mappedTeams,
+		})
+	},
+)
+
+export const searchTeams = requestHandler<NoParams, NoParams, SearchTeamsQuery>(
+	async (req, res) => {
+		const { searchQuery } = req.query
+
+		const orgTeams = await db.team.findMany({
+			where: {
+				teamOrgId: req.currentSession!.orgId,
+				teamName: {
+					contains: searchQuery,
+				},
+			},
+			include: {
+				_count: {
+					select: {
+						teamUsers: true,
+						teamProjects: true,
+					},
+				},
+			},
+			...getQueryOffset(req.query),
+		})
+
+		const mappedTeams = orgTeams.map((orgTeam) => {
+			const {
+				_count: { teamUsers, teamProjects },
+				teamId,
+				teamName,
+				teamOrgId,
+			} = orgTeam
+			return {
+				teamId: teamId,
+				teamName: teamName,
+				teamOrgId: teamOrgId,
+				userCount: teamUsers,
+				projectCount: teamProjects,
+			} satisfies TeamsResponse["orgTeams"][number]
+		})
+
+		return res.status(StatusCodes.OK).json<TeamsResponse>({
 			responseStatus: "SUCCESS",
 			orgTeams: mappedTeams,
 		})
