@@ -1,6 +1,6 @@
 import { UserRole } from "@prisma/client"
 
-import { createTeam, getTeams } from "@/controllers/orgs/me/teams"
+import { createTeam, getTeams, searchTeams } from "@/controllers/orgs/me/teams"
 
 import { myOrgTeamIdRouter } from "@/routers/orgs/me/teams/[teamId]"
 
@@ -69,7 +69,7 @@ myOrgTeamsRouter.get<
 			searchQuery: NULLISH(STRING()),
 		}),
 	}),
-	getTeams,
+	searchTeams,
 )
 
 myOrgTeamsRouter.use<TeamId, NoParams, NoParams, NoParams, NoParams>(
