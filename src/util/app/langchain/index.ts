@@ -18,7 +18,7 @@ import { LogLevel, log } from "@/util/log"
 
 export const workflowLLM = new ChatOpenAI({
 	apiKey: OPENAI_API_KEY,
-	model: "gpt-4o",
+	model: "gpt-4o-mini",
 	temperature: 0.5,
 })
 
@@ -39,6 +39,7 @@ export async function getLangchainGraphInstance(
 
 type FromLLMArgs = FromLLMInput & {
 	inputKey: string
+	outputKey: string
 }
 
 /**
@@ -67,6 +68,7 @@ export class CustomChain extends GraphCypherQAChain {
 			returnIntermediateSteps = false,
 			returnDirect = false,
 			inputKey,
+			outputKey,
 		} = fromLLMArgs
 		if (!cypherLLM && !llm) {
 			throw new Error(
@@ -98,6 +100,49 @@ export class CustomChain extends GraphCypherQAChain {
 			returnIntermediateSteps,
 			returnDirect,
 			inputKey: inputKey,
+			outputKey: outputKey,
 		})
+	}
+
+	override async _call(values: any, runManager: any) {
+		const callbacks = runManager?.getChild()
+		// @ts-expect-error
+		const question = values[this.inputKey]
+		const intermediateSteps = []
+		// @ts-expect-error
+		const generatedCypher = await this.cypherGenerationChain.call(
+			{
+				question: question,
+				// @ts-expect-error
+				schema: this.graph.getSchema(),
+				projectType: values.projectType,
+			},
+			callbacks,
+		)
+		const extractedCypher = this.extractCypher(generatedCypher.text)
+		intermediateSteps.push({ query: extractedCypher })
+		let chainResult
+		// @ts-expect-error
+		const context = await this.graph.query(extractedCypher, {
+			// @ts-expect-error
+			topK: this.topK,
+		})
+		intermediateSteps.push({ context })
+		// @ts-expect-error
+		const result = await this.qaChain.call(
+			{ question, context: JSON.stringify(context) },
+			callbacks,
+		)
+		chainResult = {
+			query: extractedCypher,
+			context: context,
+			// @ts-expect-error
+			[this.outputKey]: result[this.qaChain.outputKey],
+		}
+		// @ts-expect-error
+		if (this.returnIntermediateSteps) {
+			chainResult[exports.INTERMEDIATE_STEPS_KEY] = intermediateSteps
+		}
+		return chainResult
 	}
 }
