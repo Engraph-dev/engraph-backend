@@ -1,17 +1,13 @@
 import { WorkflowMessageSender } from "@prisma/client"
 
+import { createCuid } from "@/util/app/helpers"
+import { getCypherQuery, getQuestionResponse } from "@/util/app/helpers/ai"
 import {
 	ROOT_DB_CREDENTIALS,
 	getGraphDb,
 	queryGraphDb,
 } from "@/util/app/helpers/memgraph"
 import { getWorkflowPassword } from "@/util/app/helpers/workflows"
-import {
-	CustomChain,
-	getLangchainGraphInstance,
-	workflowLLM,
-} from "@/util/app/langchain"
-import { LANGCHAIN_VERBOSE } from "@/util/config/langchain"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import {
@@ -88,6 +84,38 @@ export const queryWorkflow = requestHandler<
 	const { projectId, workflowId } = req.params
 	const { userQuery } = req.body
 
+	const existingWorkflowMessage = await db.workflowMessage.findFirst({
+		where: {
+			messageContent: userQuery,
+		},
+	})
+
+	if (existingWorkflowMessage) {
+		const answerMessage = await db.workflowMessage.findFirst({
+			where: {
+				messageGroupId: existingWorkflowMessage.messageGroupId,
+				messageWorkflowId: workflowId,
+				messageSender: WorkflowMessageSender.AnswerAgent,
+			},
+		})
+
+		if (answerMessage) {
+			log(
+				"workflow.query",
+				LogLevel.Debug,
+				`Returning cached answer ${answerMessage.messageId}`,
+			)
+			return res.status(StatusCodes.OK).json<QueryWorkflowResponse>({
+				responseStatus: "SUCCESS",
+				queryData: {
+					queryResponse: "",
+					queryContext: "",
+					chatResponse: answerMessage.messageContent,
+				},
+			})
+		}
+	}
+
 	const workflowPassword = getWorkflowPassword(workflowId)
 
 	// const dbCredentials: GraphDBCredentials = {
@@ -98,75 +126,99 @@ export const queryWorkflow = requestHandler<
 
 	const dbCredentials = ROOT_DB_CREDENTIALS
 
-	const [projectDoc, chainGraph] = await Promise.all([
+	const [projectDoc, workflowMessages, graphDb] = await Promise.all([
 		db.project.findFirstOrThrow({
 			where: {
 				projectId: projectId,
 			},
 		}),
-		getLangchainGraphInstance(dbCredentials),
+		db.workflowMessage.findMany({
+			where: {
+				messageWorkflowId: workflowId,
+			},
+		}),
+		getGraphDb(dbCredentials),
 	])
 
-	// const mappedMessages = previousMessages.map((prevMessage) => {
-	// 	const { messageSender, messageContent } = prevMessage
-	// 	if (messageSender === WorkflowMessageSender.User) {
-	// 		return new HumanMessage(messageContent)
-	// 	} else if (messageSender === WorkflowMessageSender.Assistant) {
-	// 		return new AIMessage(messageContent)
-	// 	}
-	// 	return undefined
-	// })
-
-	// const finalMessages = mappedMessages.filter((mappedMessage) => {
-	// 	return mappedMessage !== undefined
-	// })
-
-	// finalMessages.push(new HumanMessage(userQuery))
-
-	const langChain = CustomChain.fromLLM({
-		graph: chainGraph,
-		llm: workflowLLM,
-		inputKey: INPUT_KEY,
-		outputKey: OUTPUT_KEY,
+	const cypherQuery = await getCypherQuery({
+		projectData: projectDoc,
+		workflowMessages: workflowMessages,
+		dbCredentials: dbCredentials,
+		graphDb: graphDb,
+		userQuery: userQuery,
 	})
 
-	langChain.verbose = LANGCHAIN_VERBOSE
+	log("workflow.query", LogLevel.Debug, `Cypher query: ${cypherQuery}`)
 
-	db.workflowMessage.create({
-		data: {
-			messageSender: WorkflowMessageSender.User,
-			messageContent: userQuery,
-			messageTimestamp: new Date(),
-			messageWorkflowId: workflowId,
-			messageUserId: req.currentSession!.userId,
-		},
+	let queryResults: any
+
+	if (cypherQuery === `""`) {
+		queryResults = []
+	} else {
+		queryResults = await queryGraphDb(
+			graphDb,
+			cypherQuery,
+			{},
+			{ database: dbCredentials.dbName },
+		)
+	}
+
+	log(
+		"workflow.query",
+		LogLevel.Debug,
+		`Query results: ${JSON.stringify(queryResults)}`,
+	)
+
+	const answerResponse = await getQuestionResponse({
+		projectData: projectDoc,
+		workflowMessages: workflowMessages,
+		queryResults: queryResults,
+		userQuery: userQuery,
 	})
 
-	const responseContent = (await langChain.invoke({
-		[INPUT_KEY]: userQuery,
-		projectType: projectDoc.projectType,
-	})) as any
+	const groupId = createCuid()
 
-	const responseText = responseContent[OUTPUT_KEY] as string
+	if (answerResponse) {
+		await db.workflowMessage.createMany({
+			data: [
+				{
+					messageGroupId: groupId,
+					messageContent: userQuery,
+					messageSender: WorkflowMessageSender.User,
+					messageTimestamp: new Date(),
+					messageUserId: req.currentSession!.userId,
+					messageWorkflowId: workflowId,
+				},
+				{
+					messageGroupId: groupId,
+					messageContent: cypherQuery,
+					messageSender: WorkflowMessageSender.QueryAgent,
+					messageTimestamp: new Date(),
+					messageUserId: req.currentSession!.userId,
+					messageWorkflowId: workflowId,
+				},
+				{
+					messageGroupId: groupId,
+					messageContent: answerResponse,
+					messageSender: WorkflowMessageSender.AnswerAgent,
+					messageTimestamp: new Date(),
+					messageUserId: req.currentSession!.userId,
+					messageWorkflowId: workflowId,
+				},
+			],
+		})
 
-	log("workflow.query", LogLevel.Debug, responseText)
+		return res.status(StatusCodes.OK).json<QueryWorkflowResponse>({
+			responseStatus: "SUCCESS",
+			queryData: {
+				queryResponse: cypherQuery,
+				queryContext: JSON.stringify(queryResults),
+				chatResponse: answerResponse,
+			},
+		})
+	}
 
-	res.status(StatusCodes.OK).json<QueryWorkflowResponse>({
-		responseStatus: "SUCCESS",
-		queryData: {
-			chatResponse: responseText,
-			execContext: responseContent.context,
-			execQuery: responseContent.query,
-		},
-	})
-
-	db.workflowMessage.create({
-		data: {
-			messageSender: WorkflowMessageSender.Assistant,
-			messageContent: responseText,
-			messageTimestamp: new Date(),
-			messageWorkflowId: workflowId,
-			messageUserId: req.currentSession!.userId,
-		},
+	return res.status(StatusCodes.INTERNAL_ERROR).json({
+		responseStatus: "ERR_INTERNAL_ERROR",
 	})
 })
