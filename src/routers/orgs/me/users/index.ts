@@ -3,7 +3,9 @@ import { UserRole } from "@prisma/client"
 import { createUser, getUsers, searchUsers } from "@/controllers/orgs/me/users"
 
 import { userIdRouter } from "@/routers/orgs/me/users/[userId]"
+import { myUserRouter } from "@/routers/orgs/me/users/me"
 
+import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { UnusedEmail } from "@/util/app/validators/auth"
 import {
 	PagedQueryValidator,
@@ -33,6 +35,10 @@ const usersRouter = Router()
 
 usersRouter.post<"/", NoParams, NoParams, CreateUserBody, NoParams, NoParams>(
 	"/",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
 	validateParams({
 		bodyParams: {
 			userFirstName: STR_NOT_EMPTY(),
@@ -74,8 +80,17 @@ usersRouter.get<
 	searchUsers,
 )
 
+usersRouter.use<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
+	"/me",
+	myUserRouter,
+)
+
 usersRouter.use<"/:userId", UserId, NoParams, NoParams, NoParams, NoParams>(
 	"/:userId",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
 	validateParams({
 		urlParams: {
 			userId: UserEntityValidator({

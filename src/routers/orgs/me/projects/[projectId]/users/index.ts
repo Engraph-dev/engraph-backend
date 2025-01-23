@@ -8,7 +8,7 @@ import { NoParams } from "@/util/defs/engraph-backend/common"
 import {
 	GetProjectUsersParams,
 	GetProjectUsersQuery,
-} from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]/teams"
+} from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]/users"
 import { UserId } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
 import { validateParams } from "@/util/http/middleware"
 import { Router } from "@/util/http/router"
