@@ -6,7 +6,7 @@ import {
 	GetProjectUsersParams,
 	type GetProjectUsersQuery,
 	type GetProjectUsersResponse,
-} from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]/teams"
+} from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]/users"
 import { requestHandler } from "@/util/http/wrappers"
 
 export const getProjectUsers = requestHandler<

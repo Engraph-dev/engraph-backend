@@ -52,6 +52,7 @@ myOrgProjectIdRouter.patch<
 			projectEntryPoint: NULLISH(
 				EXPECT_TYPE<string>("string", NOVALIDATE()),
 			),
+			projectBranch: NULLISH(STR_NOT_EMPTY()),
 		},
 	}),
 	updateProject,
