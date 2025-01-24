@@ -1,4 +1,4 @@
-import { ProjectType, UserRole } from "@prisma/client"
+import { ProjectType } from "@prisma/client"
 
 import {
 	deleteProject,
@@ -10,7 +10,6 @@ import { projectIdTeamsRouter } from "@/routers/orgs/me/projects/[projectId]/tea
 import { projectIdUsersRouter } from "@/routers/orgs/me/projects/[projectId]/users"
 import { projectWorkflowsRouter } from "@/routers/orgs/me/projects/[projectId]/workflows"
 
-import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { ProjectAdminAccessValidator } from "@/util/app/validators/projects"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type { ProjectId } from "@/util/defs/engraph-backend/orgs/me/projects"
@@ -41,9 +40,10 @@ myOrgProjectIdRouter.patch<
 	NoParams
 >(
 	"/",
-	requireOrgRole({
-		userRole: UserRole.Admin,
-		includeImplicit: true,
+	validateParams({
+		urlParams: {
+			projectId: ProjectAdminAccessValidator({ includeImplicit: true }),
+		},
 	}),
 	validateParams({
 		bodyParams: {
@@ -67,9 +67,10 @@ myOrgProjectIdRouter.delete<
 	NoParams
 >(
 	"/",
-	requireOrgRole({
-		userRole: UserRole.Admin,
-		includeImplicit: true,
+	validateParams({
+		urlParams: {
+			projectId: ProjectAdminAccessValidator({ includeImplicit: true }),
+		},
 	}),
 	deleteProject,
 )
