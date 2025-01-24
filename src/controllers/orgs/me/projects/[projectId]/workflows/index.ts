@@ -1,5 +1,6 @@
 import { WorkflowStatus } from "@prisma/client"
 
+import { getQueryOffset } from "@/util/app/helpers"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import {
@@ -32,6 +33,7 @@ export const getProjectWorkflows = requestHandler<
 		orderBy: {
 			workflowStartTimestamp: "desc",
 		},
+		...getQueryOffset(req.query),
 	})
 
 	return res.status(StatusCodes.OK).json<GetProjectWorkflowsResponse>({

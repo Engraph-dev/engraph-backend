@@ -1,14 +1,20 @@
 import { UserRole } from "@prisma/client"
 
-import { deleteUser, updateUser } from "@/controllers/orgs/me/users/[userId]"
+import {
+	deleteUser,
+	getUser,
+	updateUser,
+} from "@/controllers/orgs/me/users/[userId]"
 
 import { userIdSessionsRouter } from "@/routers/orgs/me/users/[userId]/sessions"
 
+import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { UserEntityValidator } from "@/util/app/validators/users"
 import { PASSWORD_LENGTH } from "@/util/config/auth"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
 	DeleteUserParams,
+	GetUserParams,
 	UpdateUserBody,
 	UpdateUserParams,
 } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
@@ -55,6 +61,18 @@ userIdRouter.delete<
 	NoParams
 >("/", deleteUser)
 
-userIdRouter.use("/sessions", userIdSessionsRouter)
+userIdRouter.get<"/", GetUserParams, NoParams, NoParams, NoParams, NoParams>(
+	"/",
+	getUser,
+)
+
+userIdRouter.use(
+	"/sessions",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
+	userIdSessionsRouter,
+)
 
 export { userIdRouter }
