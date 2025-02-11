@@ -93,6 +93,14 @@ export const createProject = requestHandler<
 			projectType: projectType,
 			projectBranch: projectBranch,
 			projectEntryPoint: projectEntryPoint,
+			projectUsers: {
+				// Implicitly add current user as admin for that project
+				// Note that this doesn't mean they are an org admin
+				create: {
+					userId: req.currentSession!.userId,
+					accessLevel: AccessLevel.Admin,
+				},
+			},
 		},
 	})
 
@@ -101,14 +109,6 @@ export const createProject = requestHandler<
 		eventType: EventType.ProjectCreate,
 		eventMetadata: {
 			projectId: projectData.projectId,
-		},
-	})
-
-	await db.projectUserAccess.create({
-		data: {
-			projectId: projectData.projectId,
-			userId: req.currentSession!.userId,
-			accessLevel: AccessLevel.Admin,
 		},
 	})
 

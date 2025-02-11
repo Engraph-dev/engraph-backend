@@ -316,10 +316,14 @@ export function FORCE_FAIL<T>(
 	}
 }
 
+export function STRING(): ValidatorFunction<string> {
+	return EXPECT_TYPE<string>("string", NOVALIDATE())
+}
+
 // String length must exactly be equal E1002
 export function STRLEN_EQ(strLen: number): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
-		if (value.length !== strLen) {
+		if (value.trim().length !== strLen) {
 			return invalidParam({
 				errorCode: ErrorCodes.ExactStringLength,
 				errorArgs: { expectedLength: strLen },
@@ -332,7 +336,7 @@ export function STRLEN_EQ(strLen: number): ValidatorFunction<string> {
 // String length should be non-zero E1001
 export function STR_NOT_EMPTY(): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
-		if (value.length === 0) {
+		if (value.trim().length === 0) {
 			return invalidParam({
 				errorCode: ErrorCodes.EmptyString,
 				errorArgs: {},
@@ -345,7 +349,7 @@ export function STR_NOT_EMPTY(): ValidatorFunction<string> {
 // String length should be minimum
 export function STRLEN_MIN(minLen: number): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
-		if (value.length < minLen) {
+		if (value.trim().length < minLen) {
 			return invalidParam({
 				errorCode: ErrorCodes.MinStringLength,
 				errorArgs: { minLength: minLen },
@@ -358,7 +362,7 @@ export function STRLEN_MIN(minLen: number): ValidatorFunction<string> {
 // At most maxLen characters in string
 export function STRLEN_MAX(maxLen: number): ValidatorFunction<string> {
 	return (value) => {
-		if (value.length > maxLen) {
+		if (value.trim().length > maxLen) {
 			return invalidParam({
 				errorCode: ErrorCodes.MaxStringLength,
 				errorArgs: { maxLength: maxLen },
@@ -374,7 +378,7 @@ export function STRLEN_MIN_MAX(
 	maxLen: number,
 ): ValidatorFunction<string> {
 	return EXPECT_TYPE<string>("string", (value) => {
-		if (value.length < minLen || value.length > maxLen) {
+		if (value.trim().length < minLen || value.trim().length > maxLen) {
 			return invalidParam({
 				errorCode: ErrorCodes.MinMaxStringLength,
 				errorArgs: { minLength: minLen, maxLength: maxLen },
@@ -533,6 +537,10 @@ export function IS_OBJECT_URL(
 			})
 		}
 	})
+}
+
+export function NUMBER(): ValidatorFunction<number> {
+	return EXPECT_TYPE<number>("number", NOVALIDATE())
 }
 
 // Number should be non-zero

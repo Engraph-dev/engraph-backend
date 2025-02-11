@@ -6,6 +6,8 @@ import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import {
 	type DeleteUserParams,
+	type GetUserParams,
+	GetUserResponse,
 	type UpdateUserBody,
 	UpdateUserParams,
 	type UpdateUserResponse,
@@ -54,6 +56,23 @@ export const deleteUser = requestHandler<DeleteUserParams, NoParams, NoParams>(
 
 		return res.status(StatusCodes.OK).json({
 			responseStatus: "SUCCESS",
+		})
+	},
+)
+
+export const getUser = requestHandler<GetUserParams, NoParams, NoParams>(
+	async (req, res) => {
+		const { userId } = req.params
+
+		const userData = await db.user.findFirstOrThrow({
+			where: {
+				userId: userId,
+			},
+		})
+
+		return res.status(StatusCodes.OK).json<GetUserResponse>({
+			responseStatus: "SUCCESS",
+			userData: getMiniUser(userData),
 		})
 	},
 )

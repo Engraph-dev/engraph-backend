@@ -1,5 +1,4 @@
 import { S3RequestMethod } from "@prisma/client"
-import { Router } from "express"
 
 import { mediaCallbackHandler, mediaHandler } from "@/controllers/media"
 
@@ -15,9 +14,10 @@ import {
 	type MediaEndpointRequestQuery,
 } from "@/util/defs/engraph-backend/media"
 import { requireMethods, validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import { EXPECT_TYPE, IN_ARRAY, NOVALIDATE } from "@/util/http/validators"
 
-const mediaRouter = Router({ mergeParams: true })
+const mediaRouter = Router()
 
 mediaRouter.post<
 	"/",

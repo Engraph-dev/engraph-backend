@@ -8,11 +8,13 @@ import { getMiniUser } from "@/util/app/helpers/users"
 import { BCRYPT_SALT_ROUNDS, VERIFY_EMAIL } from "@/util/config/auth"
 import db from "@/util/db"
 import { NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
-import {
-	type CreateUserBody,
+import type {
+	CreateUserBody,
 	CreateUserResponse,
-	type GetUsersQuery,
-	type GetUsersResponse,
+	GetUsersQuery,
+	GetUsersResponse,
+	SearchUsersQuery,
+	SearchUsersResponse,
 } from "@/util/defs/engraph-backend/orgs/me/users"
 import { requestHandler } from "@/util/http/wrappers"
 
@@ -65,6 +67,9 @@ export const getUsers = requestHandler<NoParams, NoParams, GetUsersQuery>(
 			where: {
 				userOrgId: req.currentSession!.orgId,
 			},
+			orderBy: {
+				userRole: "asc",
+			},
 			...getQueryOffset(req.query),
 		})
 
@@ -73,6 +78,51 @@ export const getUsers = requestHandler<NoParams, NoParams, GetUsersQuery>(
 		})
 
 		return res.status(StatusCodes.OK).json<GetUsersResponse>({
+			responseStatus: "SUCCESS",
+			orgUsers: mappedUsers,
+		})
+	},
+)
+
+export const searchUsers = requestHandler<NoParams, NoParams, SearchUsersQuery>(
+	async (req, res) => {
+		const { searchQuery } = req.query
+
+		const orgUsers = await db.user.findMany({
+			where: {
+				userOrgId: req.currentSession!.orgId,
+				OR: [
+					{
+						userFirstName: {
+							contains: searchQuery,
+							mode: "insensitive",
+						},
+					},
+					{
+						userLastName: {
+							contains: searchQuery,
+							mode: "insensitive",
+						},
+					},
+					{
+						userMail: {
+							contains: searchQuery,
+							mode: "insensitive",
+						},
+					},
+				],
+			},
+			orderBy: {
+				userRole: "asc",
+			},
+			...getQueryOffset(req.query),
+		})
+
+		const mappedUsers = orgUsers.map((orgUser) => {
+			return getMiniUser(orgUser)
+		})
+
+		return res.status(StatusCodes.OK).json<SearchUsersResponse>({
 			responseStatus: "SUCCESS",
 			orgUsers: mappedUsers,
 		})

@@ -1,8 +1,8 @@
-import { Router } from "express"
-
 import { orgIdAuthRouter } from "@/routers/orgs/[orgId]/auth"
 
-const orgIdRouter = Router({ mergeParams: true })
+import { Router } from "@/util/http/router"
+
+const orgIdRouter = Router()
 
 orgIdRouter.use("/auth", orgIdAuthRouter)
 

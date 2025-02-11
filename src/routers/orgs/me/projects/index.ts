@@ -1,14 +1,19 @@
-import { AccessLevel, ProjectSourceType, ProjectType } from "@prisma/client"
-import { Router } from "express"
+import {
+	AccessLevel,
+	ProjectSourceType,
+	ProjectType,
+	UserRole,
+} from "@prisma/client"
 
 import { createProject, getProjects } from "@/controllers/orgs/me/projects"
 
 import { myOrgProjectIdRouter } from "@/routers/orgs/me/projects/[projectId]"
 
+import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { WithPagedQueryValidator } from "@/util/app/validators/common"
 import {
 	OrgProjectLimit,
-	ProjectIdSameOrgValidator,
+	ProjectEntityValidator,
 } from "@/util/app/validators/projects"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
@@ -17,9 +22,17 @@ import type {
 	ProjectId,
 } from "@/util/defs/engraph-backend/orgs/me/projects"
 import { validateParams } from "@/util/http/middleware"
-import { ALL_OF, IN_ENUM, NULLISH, STR_NOT_EMPTY } from "@/util/http/validators"
+import { Router } from "@/util/http/router"
+import {
+	ALL_OF,
+	EXPECT_TYPE,
+	IN_ENUM,
+	NOVALIDATE,
+	NULLISH,
+	STR_NOT_EMPTY,
+} from "@/util/http/validators"
 
-const myOrgProjectsRouter = Router({ mergeParams: true })
+const myOrgProjectsRouter = Router()
 
 myOrgProjectsRouter.get<"/", NoParams, NoParams, NoParams, GetProjectsQuery>(
 	"/",
@@ -40,6 +53,10 @@ myOrgProjectsRouter.post<
 	NoParams
 >(
 	"/",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
 	validateParams<NoParams, CreateProjectBody, NoParams>({
 		bodyParams: {
 			projectName: ALL_OF([STR_NOT_EMPTY(), OrgProjectLimit]),
@@ -47,7 +64,7 @@ myOrgProjectsRouter.post<
 			projectIdentifier: STR_NOT_EMPTY(),
 			projectBranch: STR_NOT_EMPTY(),
 			projectType: IN_ENUM(ProjectType),
-			projectEntryPoint: STR_NOT_EMPTY(),
+			projectEntryPoint: EXPECT_TYPE<string>("string", NOVALIDATE()),
 		},
 	}),
 	createProject,
@@ -64,7 +81,7 @@ myOrgProjectsRouter.use<
 	"/:projectId",
 	validateParams({
 		urlParams: {
-			projectId: ProjectIdSameOrgValidator,
+			projectId: ProjectEntityValidator({ allowSameOrgOnly: true }),
 		},
 	}),
 	myOrgProjectIdRouter,

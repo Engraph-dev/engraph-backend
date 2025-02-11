@@ -1,19 +1,25 @@
 import { UserRole } from "@prisma/client"
-import { Router } from "express"
 
-import { deleteUser, updateUser } from "@/controllers/orgs/me/users/[userId]"
+import {
+	deleteUser,
+	getUser,
+	updateUser,
+} from "@/controllers/orgs/me/users/[userId]"
 
 import { userIdSessionsRouter } from "@/routers/orgs/me/users/[userId]/sessions"
 
+import { requireOrgRole } from "@/util/app/middleware/orgs"
 import { UserEntityValidator } from "@/util/app/validators/users"
 import { PASSWORD_LENGTH } from "@/util/config/auth"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type {
 	DeleteUserParams,
+	GetUserParams,
 	UpdateUserBody,
 	UpdateUserParams,
 } from "@/util/defs/engraph-backend/orgs/me/users/[userId]"
 import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import {
 	IN_ENUM,
 	NULLISH,
@@ -21,7 +27,7 @@ import {
 	STR_NOT_EMPTY,
 } from "@/util/http/validators"
 
-const userIdRouter = Router({ mergeParams: true })
+const userIdRouter = Router()
 
 userIdRouter.patch<
 	"/",
@@ -34,7 +40,7 @@ userIdRouter.patch<
 	"/",
 	validateParams({
 		urlParams: {
-			userId: UserEntityValidator({ allowSameUserAsReq: false }),
+			userId: UserEntityValidator({ allowSameUserAsRequest: false }),
 		},
 		bodyParams: {
 			userFirstName: NULLISH(STR_NOT_EMPTY()),
@@ -55,6 +61,18 @@ userIdRouter.delete<
 	NoParams
 >("/", deleteUser)
 
-userIdRouter.use("/sessions", userIdSessionsRouter)
+userIdRouter.get<"/", GetUserParams, NoParams, NoParams, NoParams, NoParams>(
+	"/",
+	getUser,
+)
+
+userIdRouter.use(
+	"/sessions",
+	requireOrgRole({
+		userRole: UserRole.Admin,
+		includeImplicit: true,
+	}),
+	userIdSessionsRouter,
+)
 
 export { userIdRouter }

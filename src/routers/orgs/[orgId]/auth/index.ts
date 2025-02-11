@@ -1,5 +1,3 @@
-import { Router } from "express"
-
 import {
 	loginCredentials,
 	resendVerificationToken,
@@ -17,11 +15,10 @@ import type {
 	VerifyTokenParams,
 } from "@/util/defs/engraph-backend/orgs/me/auth"
 import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import { IS_EMAIL, STRLEN_MIN, STR_NOT_EMPTY } from "@/util/http/validators"
 
-const orgIdAuthRouter = Router({
-	mergeParams: true,
-})
+const orgIdAuthRouter = Router()
 
 orgIdAuthRouter.post<
 	"/credentials",

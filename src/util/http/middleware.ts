@@ -511,6 +511,7 @@ type CacheEndpointArgs = {
 export function cacheEndpoint(
 	args: CacheEndpointArgs = {
 		cacheSeconds: 86400,
+		cachePrivate: false,
 	},
 ) {
 	const { cacheSeconds, cachePrivate = false } = args

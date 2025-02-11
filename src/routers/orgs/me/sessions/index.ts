@@ -1,5 +1,3 @@
-import { Router } from "express"
-
 import {
 	endCurrentSession,
 	endSessionById,
@@ -11,8 +9,9 @@ import { SessionEntityValidator } from "@/util/app/validators/session"
 import { NoParams } from "@/util/defs/engraph-backend/common"
 import { EndSessionParams } from "@/util/defs/engraph-backend/orgs/me/sessions/me"
 import { restrictEndpoint, validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 
-const myOrgSessionRouter = Router({ mergeParams: true })
+const myOrgSessionRouter = Router()
 
 myOrgSessionRouter.get<"/me", NoParams, NoParams, NoParams, NoParams, NoParams>(
 	"/me",

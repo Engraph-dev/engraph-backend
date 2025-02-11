@@ -1,14 +1,13 @@
-import { Router } from "express"
-
 import { dangerZone } from "@/controllers/orgs/me/auth"
 
 import { PASSWORD_LENGTH } from "@/util/config/auth"
 import type { NoParams } from "@/util/defs/engraph-backend/common"
 import type { DangerZoneBody } from "@/util/defs/engraph-backend/orgs/me/auth"
 import { validateParams } from "@/util/http/middleware"
+import { Router } from "@/util/http/router"
 import { STRLEN_MIN } from "@/util/http/validators"
 
-const myOrgAuthRouter = Router({ mergeParams: true })
+const myOrgAuthRouter = Router()
 
 myOrgAuthRouter.post<
 	"/danger-zone",

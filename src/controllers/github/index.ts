@@ -15,7 +15,7 @@ type WebhookBodyType =
 	webhooks["push"]["post"]["requestBody"]["content"]["application/json"]
 
 /**
- * This *must* be mounted at a path ending in /webhooks
+ * Handles github webhook push events
  */
 export const githubEventsHandler = requestHandler<
 	NoParams,
@@ -40,7 +40,7 @@ export const githubEventsHandler = requestHandler<
 	}, 8000)
 
 	const { repository, sender, pusher, after, installation, ref } = req.body
-	const { id: repoId } = repository
+	const { id: repoId, visibility } = repository
 
 	log("webhook", LogLevel.Debug, `Incoming push event ${eventId}`)
 
@@ -72,6 +72,7 @@ export const githubEventsHandler = requestHandler<
 	const elevatedAccessLevels = getImplicitElevatedAccessLevels(
 		AccessLevel.Write,
 	)
+	// The user must have the developer user role and write-level access to the project
 
 	const projectDoc = await db.project.findFirst({
 		where: {

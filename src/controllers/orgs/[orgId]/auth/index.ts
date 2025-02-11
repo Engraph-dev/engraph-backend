@@ -62,7 +62,8 @@ export const loginCredentials = requestHandler<
 
 	const userDoc = await db.user.findFirst({
 		where: {
-			userMail,
+			userMail: userMail,
+			userOrgId: orgId,
 		},
 	})
 
