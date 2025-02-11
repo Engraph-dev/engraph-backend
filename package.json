@@ -40,7 +40,7 @@
 		"node-cron": "^3.0.3",
 		"octokit": "^4.0.3",
 		"openai": "^4.79.4",
-		"prisma": "^6.2.0",
+		"prisma": "^6.3.1",
 		"resend": "^4.0.0",
 		"resolve-tspaths": "^0.8.22",
 		"validator": "^13.12.0"
