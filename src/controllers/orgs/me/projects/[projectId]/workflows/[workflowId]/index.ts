@@ -170,7 +170,7 @@ export const queryWorkflow = requestHandler<
 
 	let queryResults: any
 
-	if (cypherQuery === `""`) {
+	if (cypherQuery === `""` || cypherQuery === "") {
 		queryResults = []
 	} else {
 		queryResults = await queryGraphDb(
