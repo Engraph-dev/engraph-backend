@@ -10,9 +10,9 @@ type LLMConfig = Partial<{
 }>
 
 export const CYPHER_LLM_CONFIG: LLMConfig = {
-	temperature: 0.8,
+	temperature: 1,
 }
 
 export const ANSWER_LLM_CONFIG: LLMConfig = {
-	temperature: 1.2,
+	temperature: 1,
 }
