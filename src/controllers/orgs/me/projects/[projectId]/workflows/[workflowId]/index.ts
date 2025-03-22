@@ -1,13 +1,17 @@
 import { WorkflowMessageSender } from "@prisma/client"
 
 import { createCuid } from "@/util/app/helpers"
-import { getCypherQuery, getQuestionResponse } from "@/util/app/helpers/ai"
+import {
+	getCypherQuery,
+	getQuestionResponseStream,
+} from "@/util/app/helpers/ai"
 import {
 	ROOT_DB_CREDENTIALS,
 	getGraphDb,
 	queryGraphDb,
 } from "@/util/app/helpers/memgraph"
 import { getWorkflowPassword } from "@/util/app/helpers/workflows"
+import { WORKFLOW_CONTEXT_MESSAGE_COUNT } from "@/util/config/workflows"
 import db from "@/util/db"
 import { type NoParams, StatusCodes } from "@/util/defs/engraph-backend/common"
 import {
@@ -15,7 +19,6 @@ import {
 	GetWorkflowResponse,
 	type QueryWorkflowBody,
 	type QueryWorkflowParams,
-	QueryWorkflowResponse,
 } from "@/util/defs/engraph-backend/orgs/me/projects/[projectId]/workflows/[workflowId]"
 import { requestHandler } from "@/util/http/wrappers"
 import { LogLevel, log } from "@/util/log"
@@ -84,37 +87,37 @@ export const queryWorkflow = requestHandler<
 	const { projectId, workflowId } = req.params
 	const { userQuery } = req.body
 
-	const existingWorkflowMessage = await db.workflowMessage.findFirst({
-		where: {
-			messageContent: userQuery,
-		},
-	})
+	// const existingWorkflowMessage = await db.workflowMessage.findFirst({
+	// 	where: {
+	// 		messageContent: userQuery,
+	// 	},
+	// })
 
-	if (existingWorkflowMessage) {
-		const answerMessage = await db.workflowMessage.findFirst({
-			where: {
-				messageGroupId: existingWorkflowMessage.messageGroupId,
-				messageWorkflowId: workflowId,
-				messageSender: WorkflowMessageSender.AnswerAgent,
-			},
-		})
+	// if (existingWorkflowMessage) {
+	// 	const answerMessage = await db.workflowMessage.findFirst({
+	// 		where: {
+	// 			messageGroupId: existingWorkflowMessage.messageGroupId,
+	// 			messageWorkflowId: workflowId,
+	// 			messageSender: WorkflowMessageSender.AnswerAgent,
+	// 		},
+	// 	})
 
-		if (answerMessage) {
-			log(
-				"workflow.query",
-				LogLevel.Debug,
-				`Returning cached answer ${answerMessage.messageId}`,
-			)
-			return res.status(StatusCodes.OK).json<QueryWorkflowResponse>({
-				responseStatus: "SUCCESS",
-				queryData: {
-					queryResponse: "",
-					queryContext: "",
-					chatResponse: answerMessage.messageContent,
-				},
-			})
-		}
-	}
+	// 	if (answerMessage) {
+	// 		log(
+	// 			"workflow.query",
+	// 			LogLevel.Debug,
+	// 			`Returning cached answer ${answerMessage.messageId}`,
+	// 		)
+	// 		return res.status(StatusCodes.OK).json<QueryWorkflowResponse>({
+	// 			responseStatus: "SUCCESS",
+	// 			queryData: {
+	// 				queryResponse: "",
+	// 				queryContext: "",
+	// 				chatResponse: answerMessage.messageContent,
+	// 			},
+	// 		})
+	// 	}
+	// }
 
 	const workflowPassword = getWorkflowPassword(workflowId)
 
@@ -136,9 +139,24 @@ export const queryWorkflow = requestHandler<
 			where: {
 				messageWorkflowId: workflowId,
 			},
+			orderBy: {
+				messageIndex: "desc",
+			},
+			take:
+				WORKFLOW_CONTEXT_MESSAGE_COUNT *
+				Object.keys(WorkflowMessageSender).length,
 		}),
 		getGraphDb(dbCredentials),
 	])
+
+	workflowMessages.reverse()
+
+	log(
+		"workflow.query",
+		LogLevel.Debug,
+		`Workflow messages:`,
+		workflowMessages,
+	)
 
 	const cypherQuery = await getCypherQuery({
 		projectData: projectDoc,
@@ -169,56 +187,67 @@ export const queryWorkflow = requestHandler<
 		`Query results: ${JSON.stringify(queryResults)}`,
 	)
 
-	const answerResponse = await getQuestionResponse({
+	const answerResponseStream = await getQuestionResponseStream({
 		projectData: projectDoc,
 		workflowMessages: workflowMessages,
 		queryResults: queryResults,
 		userQuery: userQuery,
 	})
 
-	const groupId = createCuid()
+	let answerResponse = ""
 
-	if (answerResponse) {
-		await db.workflowMessage.createMany({
-			data: [
-				{
-					messageGroupId: groupId,
-					messageContent: userQuery,
-					messageSender: WorkflowMessageSender.User,
-					messageTimestamp: new Date(),
-					messageUserId: req.currentSession!.userId,
-					messageWorkflowId: workflowId,
-				},
-				{
-					messageGroupId: groupId,
-					messageContent: cypherQuery,
-					messageSender: WorkflowMessageSender.QueryAgent,
-					messageTimestamp: new Date(),
-					messageUserId: req.currentSession!.userId,
-					messageWorkflowId: workflowId,
-				},
-				{
-					messageGroupId: groupId,
-					messageContent: answerResponse,
-					messageSender: WorkflowMessageSender.AnswerAgent,
-					messageTimestamp: new Date(),
-					messageUserId: req.currentSession!.userId,
-					messageWorkflowId: workflowId,
-				},
-			],
-		})
+	res.writeHead(StatusCodes.OK, {
+		"content-type": "text/plain; charset=utf-8",
+	})
 
-		return res.status(StatusCodes.OK).json<QueryWorkflowResponse>({
-			responseStatus: "SUCCESS",
-			queryData: {
-				queryResponse: cypherQuery,
-				queryContext: JSON.stringify(queryResults),
-				chatResponse: answerResponse,
-			},
-		})
+	for await (const answerChunk of answerResponseStream) {
+		const { choices } = answerChunk
+		if (choices.length) {
+			const { delta, finish_reason } = choices[0]
+			const chunkContentStr = delta.content ?? ""
+			answerResponse += chunkContentStr
+			res.write(chunkContentStr)
+		}
 	}
 
-	return res.status(StatusCodes.INTERNAL_ERROR).json({
-		responseStatus: "ERR_INTERNAL_ERROR",
+	res.end()
+
+	const groupId = createCuid()
+
+	await db.workflowMessage.createMany({
+		data: [
+			{
+				messageGroupId: groupId,
+				messageContent: userQuery,
+				messageSender: WorkflowMessageSender.User,
+				messageTimestamp: new Date(),
+				messageUserId: req.currentSession!.userId,
+				messageWorkflowId: workflowId,
+			},
+			{
+				messageGroupId: groupId,
+				messageContent: cypherQuery,
+				messageSender: WorkflowMessageSender.QueryAgent,
+				messageTimestamp: new Date(),
+				messageUserId: req.currentSession!.userId,
+				messageWorkflowId: workflowId,
+			},
+			{
+				messageGroupId: groupId,
+				messageContent: JSON.stringify(queryResults),
+				messageSender: WorkflowMessageSender.ContextAgent,
+				messageTimestamp: new Date(),
+				messageUserId: req.currentSession!.userId,
+				messageWorkflowId: workflowId,
+			},
+			{
+				messageGroupId: groupId,
+				messageContent: answerResponse,
+				messageSender: WorkflowMessageSender.AnswerAgent,
+				messageTimestamp: new Date(),
+				messageUserId: req.currentSession!.userId,
+				messageWorkflowId: workflowId,
+			},
+		],
 	})
 })

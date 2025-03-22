@@ -66,8 +66,6 @@ export function getCypherQueryPrompt(args: GetCypherQueryPromptArgs) {
 	return `
 	Your task is to generate a graph cypher query to a specific user question. 
 	The graph database contains information about the project's ${projectType} files and symbols.
-	If the question of the user is dangerous or entirely irrelevant, return an empty string "".
-	If the question of the user is partially relevant, generate a relevant query for that part.
 	Reply only with a cypher query, and nothing else.
 
 	The graph database nodes are as follows
@@ -84,9 +82,7 @@ export function getCypherQueryPrompt(args: GetCypherQueryPromptArgs) {
 	DEPENDS_ON: A module or symbol depends on another module or symbol.
 	EXPORTS: A module exports a symbol for use to other modules or symbols,
 	
-	You may query dependencies or dependents of a node for additional data.
-	Maximize the amount of helpful data you can get in a query.
-	`
+	Always try to query dependencies or dependents of a node for additional data.`
 }
 
 type GetAnswerPromptArgs = {
@@ -137,7 +133,9 @@ export async function getCypherQuery(args: GetCypherQueryArgs) {
 	const filteredMessages = workflowMessages.filter((workflowMessage) => {
 		// Do not add answer messages in the query
 		if (
-			workflowMessage.messageSender === WorkflowMessageSender.AnswerAgent
+			workflowMessage.messageSender ===
+				WorkflowMessageSender.AnswerAgent ||
+			workflowMessage.messageSender === WorkflowMessageSender.ContextAgent
 		) {
 			return false
 		}
@@ -193,7 +191,7 @@ type GetQuestionResponseArgs = {
 	workflowMessages: WorkflowMessage[]
 }
 
-export async function getQuestionResponse(args: GetQuestionResponseArgs) {
+export async function getQuestionResponseStream(args: GetQuestionResponseArgs) {
 	const { userQuery, queryResults, workflowMessages, projectData } = args
 
 	const answerPrompt = getAnswerPrompt({
@@ -211,7 +209,10 @@ export async function getQuestionResponse(args: GetQuestionResponseArgs) {
 	})
 
 	const mappedMessages = filteredMessages.map((workflowMessage) => {
-		if (workflowMessage.messageSender === WorkflowMessageSender.User) {
+		if (
+			workflowMessage.messageSender === WorkflowMessageSender.User ||
+			workflowMessage.messageSender === WorkflowMessageSender.ContextAgent
+		) {
 			return {
 				role: "user" as const,
 				content: workflowMessage.messageContent,
@@ -243,17 +244,14 @@ export async function getQuestionResponse(args: GetQuestionResponseArgs) {
 		...mappedMessages,
 	]
 
-	const completionResponse = await OpenAIClient.chat.completions.create({
-		messages: messagesWithDevPrompt,
-		model: ANSWER_LLM,
-		temperature: ANSWER_LLM_CONFIG.temperature,
-	})
+	const completionResponseStream = await OpenAIClient.chat.completions.create(
+		{
+			messages: messagesWithDevPrompt,
+			model: ANSWER_LLM,
+			temperature: ANSWER_LLM_CONFIG.temperature,
+			stream: true,
+		},
+	)
 
-	if (completionResponse.choices.length) {
-		const completionChoice = completionResponse.choices[0]
-		return completionChoice.message.content ?? ""
-	}
-
-	// Return an empty query in case of no completion
-	return ""
+	return completionResponseStream
 }
