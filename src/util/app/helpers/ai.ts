@@ -177,7 +177,10 @@ export async function getCypherQuery(args: GetCypherQueryArgs) {
 
 	if (completionResponse.choices.length) {
 		const completionChoice = completionResponse.choices[0]
-		return completionChoice.message.content ?? ""
+		const rawQuery = completionChoice.message.content ?? ""
+
+		const cleanedQuery = rawQuery.replaceAll("```", "")
+		return cleanedQuery
 	}
 
 	// Return an empty query in case of no completion
