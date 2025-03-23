@@ -179,7 +179,9 @@ export async function getCypherQuery(args: GetCypherQueryArgs) {
 		const completionChoice = completionResponse.choices[0]
 		const rawQuery = completionChoice.message.content ?? ""
 
-		const cleanedQuery = rawQuery.replaceAll("```", "")
+		const cleanedQuery = rawQuery
+			.replaceAll("```cypher", "")
+			.replaceAll("```", "")
 		return cleanedQuery
 	}
 
