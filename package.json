@@ -28,7 +28,7 @@
 		"@aws-sdk/s3-request-presigner": "^3.675.0",
 		"@paralleldrive/cuid2": "^2.2.2",
 		"@prisma/client": "^6.2.0",
-		"bcryptjs": "^2.4.3",
+		"bcryptjs": "^3.0.2",
 		"body-parser": "^1.20.3",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
