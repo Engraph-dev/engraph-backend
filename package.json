@@ -39,7 +39,7 @@
 		"neo4j-driver": "^5.27.0",
 		"node-cron": "^3.0.3",
 		"octokit": "^4.0.3",
-		"openai": "^4.89.0",
+		"openai": "^5.6.0",
 		"prisma": "^6.2.0",
 		"resend": "^4.0.0",
 		"resolve-tspaths": "^0.8.22",
